@@ -1,0 +1,19 @@
+{
+  "version": "co2-assumptions-2026.1",
+  "vehicle_occupancy": {
+    "CAR": 1,
+    "MOTORCYCLE": 1,
+    "CARPOOL": 3,
+    "E_SCOOTER": 1,
+    "WALK": null,
+    "BICYCLE": null,
+    "BUS": null
+  },
+  "baseline_occupancy_scenarios": [1.0, 1.2, 1.5],
+  "notes": [
+    "Este archivo NO contiene factores de emisión: estos viven en la tabla emission_factors (ARCHITECTURE.md §6) y cada viaje guarda el factor aplicado.",
+    "CARPOOL = 3 y CAR = 1 replican los supuestos de los factores semilla de docs/DATABASE.md §4 (automóvil / 3 ocupantes; automóvil 1 ocupante). Si SUPER_ADMIN cambia esos factores, revisar estas ocupaciones.",
+    "null = la emisión del vehículo no es atribuible al pasajero (transporte colectivo) o no hay vehículo motorizado.",
+    "baseline_occupancy_scenarios son escenarios de sensibilidad para el auto de referencia, no estadísticas medidas de Querétaro."
+  ]
+}

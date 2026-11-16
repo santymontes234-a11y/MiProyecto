@@ -1,0 +1,27 @@
+{
+  "name": "ecomove-queretaro",
+  "private": true,
+  "version": "0.1.0",
+  "description": "EcoMove Querétaro — plataforma de movilidad sostenible (monorepo)",
+  "workspaces": [
+    "apps/web",
+    "apps/mobile",
+    "packages/shared"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "dev:web": "npm run dev -w @ecomove/web",
+    "dev:mobile": "npm run start -w @ecomove/mobile",
+    "infra:up": "docker compose -f infrastructure/docker-compose.yml --env-file .env up -d --build",
+    "infra:down": "docker compose -f infrastructure/docker-compose.yml --env-file .env down",
+    "test:js": "npm run test --workspaces --if-present",
+    "test:api": "cd apps/api && .venv/bin/pytest -q",
+    "test:e2e": "pytest -q tests/e2e/api",
+    "test": "npm run test:js && npm run test:api",
+    "android": "npm run android -w @ecomove/mobile"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,118 @@
+# CI de EcoMove Querétaro (propiedad: architect). Checklist de integración automatizada (AGENTS.md §7).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  typescript:
+    name: TypeScript (shared, web, mobile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:js
+
+  api:
+    name: API (ruff + pytest + migraciones desde cero)
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: ecomove_ci
+          POSTGRES_USER: ecomove_ci
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ecomove_ci -d ecomove_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      POSTGRES_DB: ecomove_ci
+      POSTGRES_USER: ecomove_ci
+      POSTGRES_PASSWORD: ci-only-not-a-secret
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      JWT_SECRET_KEY: ci-only-jwt-secret-key-not-used-anywhere-else-0123456789
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install ".[dev]"
+      - run: ruff check .
+      - name: Migraciones desde cero (upgrade → downgrade → upgrade)
+        run: alembic upgrade head && alembic downgrade base && alembic upgrade head
+      - run: pytest -q
+
+  e2e:
+    name: E2E API (Docker Compose + tests/e2e/api)
+    runs-on: ubuntu-latest
+    needs: api
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generar .env efímero (valores aleatorios, nunca versionados)
+        run: |
+          python3 - <<'PY'
+          import secrets, pathlib
+          src = pathlib.Path(".env.example").read_text()
+          vals = {
+              "POSTGRES_PASSWORD": secrets.token_urlsafe(24),
+              "JWT_SECRET_KEY": secrets.token_urlsafe(64),
+              "BOOTSTRAP_SUPER_ADMIN_EMAIL": "qa-superadmin@example.com",
+              "BOOTSTRAP_SUPER_ADMIN_PASSWORD": "Qa" + secrets.token_urlsafe(16) + "9",
+          }
+          out = []
+          for line in src.splitlines():
+              key = line.split("=", 1)[0]
+              out.append(f"{key}={vals[key]}" if key in vals else line)
+          pathlib.Path(".env").write_text("\n".join(out) + "\n")
+          for k in ("BOOTSTRAP_SUPER_ADMIN_EMAIL", "BOOTSTRAP_SUPER_ADMIN_PASSWORD"):
+              print(f"::add-mask::{vals[k]}")
+          with open(__import__("os").environ["GITHUB_ENV"], "a") as env:
+              env.write(f"E2E_SUPERADMIN_EMAIL={vals['BOOTSTRAP_SUPER_ADMIN_EMAIL']}\n")
+              env.write(f"E2E_SUPERADMIN_PASSWORD={vals['BOOTSTRAP_SUPER_ADMIN_PASSWORD']}\n")
+          PY
+      - run: docker compose -f infrastructure/docker-compose.yml --env-file .env up -d --build --wait
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r tests/e2e/api/requirements.txt
+      - run: pytest -q tests/e2e/api
+        env:
+          E2E_API_BASE_URL: http://localhost:8000/api/v1
+          E2E_REQUIRE_API: "1"
+      - if: failure()
+        run: docker compose -f infrastructure/docker-compose.yml --env-file .env logs api
+      - if: always()
+        run: docker compose -f infrastructure/docker-compose.yml --env-file .env down -v
+
+  secrets-scan:
+    name: Sin secretos versionados
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: .env no versionado y .env.example solo con placeholders
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then
+            echo "::error::Hay archivos .env versionados"; exit 1; fi
+          if grep -nE '^(POSTGRES_PASSWORD|JWT_SECRET_KEY)=' .env.example | grep -v 'change-me'; then
+            echo "::error::.env.example contiene valores que no son placeholders"; exit 1; fi

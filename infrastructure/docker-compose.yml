@@ -1,0 +1,49 @@
+# EcoMove Querétaro — entorno de desarrollo.
+# Uso (desde la raíz):  cp .env.example .env  &&  npm run infra:up
+# Los secretos se leen de ../.env (no versionado). Nunca escribas valores reales aquí.
+name: ecomove
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?define POSTGRES_DB en .env}
+      POSTGRES_USER: ${POSTGRES_USER:?define POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD en .env}
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - ecomove_pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    ports:
+      - "${API_PUBLISH_HOST:-127.0.0.1}:8000:8000"   # 0.0.0.0 solo para probar con un teléfono en la LAN
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ecomove_pgdata:

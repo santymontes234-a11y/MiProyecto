@@ -1,0 +1,48 @@
+# Secretos — nunca se versionan
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.expo/
+.turbo/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Mobile builds
+android/
+ios/
+*.apk
+*.aab
+
+# SO / IDE
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Artefactos de ejecutar Expo desde la raíz por error (usar `npm run android`)
+/app.json
+/android/
+/ios/
+
+# Artefactos de Playwright
+test-results/
+playwright-report/
+blob-report/

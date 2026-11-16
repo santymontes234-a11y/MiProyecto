@@ -1,0 +1,16 @@
+# Propiedad de directorios por agente (ver docs/AGENTS.md).
+# Los handles son roles; sustitúyelos por usuarios/equipos reales de GitHub.
+*                         @ecomove/architect
+/docs/                    @ecomove/architect
+/apps/api/                @ecomove/backend
+/apps/api/app/services/geo_analytics/ @ecomove/geo
+/apps/api/app/routers/geo_analytics.py @ecomove/geo
+/apps/api/app/schemas/geo_analytics.py @ecomove/geo
+/apps/api/tests/geo/      @ecomove/geo
+/apps/api/db/geo/         @ecomove/geo
+/tests/e2e/               @ecomove/qa
+/infrastructure/          @ecomove/architect
+/apps/web/                @ecomove/web
+/apps/mobile/             @ecomove/mobile
+/packages/shared/         @ecomove/architect
+/packages/shared/src/design/ @ecomove/design

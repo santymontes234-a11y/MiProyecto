@@ -1,0 +1,48 @@
+{
+  "name": "@ecomove/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ecomove/shared": "*",
+    "@hookform/resolvers": "^7.0.6",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.73.0",
+    "next": "^16.0.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "^7.92.0",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.10.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^16.4.6",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.11",
+    "@types/leaflet": "^1.9.12",
+    "@types/node": "^22.0.0",
+    "@types/react": "~19.3.0",
+    "@types/react-dom": "~19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "jsdom": "^26.1.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^5.1.0"
+  }
+}

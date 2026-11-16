@@ -1,0 +1,15 @@
+{
+  "name": "@ecomove/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tipos del contrato, cliente HTTP, tokens de diseño y formateadores compartidos",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}

@@ -1,0 +1,9 @@
+.venv
+__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.env
+*.egg-info
+tests
+db/geo/900_demo_seed.sql

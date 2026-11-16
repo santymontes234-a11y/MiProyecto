@@ -1,0 +1,14 @@
+{
+  "name": "@ecomove/e2e-web",
+  "private": true,
+  "description": "E2E web (Playwright) de EcoMove Querétaro. Paquete aislado: NO es workspace de la raíz.",
+  "scripts": {
+    "test": "playwright test",
+    "install:browsers": "playwright install chromium",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "^22.20.5"
+  }
+}

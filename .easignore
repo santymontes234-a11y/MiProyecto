@@ -1,0 +1,64 @@
+# Archivos que EAS Build NO sube al compilar apps/mobile (sustituye a .gitignore para EAS).
+# Se usa con EAS_NO_VCS=1 y EAS_PROJECT_ROOT=<raíz>; ver apps/mobile/README.md.
+
+# --- Copia de .gitignore ---
+# Secretos: nunca se suben (el .env raíz contiene contraseñas y el secreto JWT)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.expo/
+.turbo/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Mobile builds
+android/
+ios/
+*.apk
+*.aab
+
+# SO / IDE
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+/app.json
+
+# --- Específico de EAS: el build de mobile solo necesita mobile + shared + manifiestos npm ---
+.git
+.claude/
+apps/api/
+docs/
+infrastructure/
+tests/
+.github/
+# web: solo su package.json, necesario para que `npm ci` resuelva los workspaces
+apps/web/*
+!apps/web/package.json
+
+# Excepción: el .env de mobile solo contiene variables públicas EXPO_PUBLIC_* (URL de la API)
+!apps/mobile/.env
+
+# Artefactos de Playwright
+test-results/
+playwright-report/
+blob-report/

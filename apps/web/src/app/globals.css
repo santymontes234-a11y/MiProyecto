@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/*
+ * Tokens de Tailwind = alias de las variables CSS que genera toCssVariables() de
+ * @ecomove/shared (inyectadas en <head> por app/theme.ts). Aquí no hay colores sueltos:
+ * se desactiva la paleta por defecto de Tailwind para forzar los tokens del sistema.
+ */
+@theme inline {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-canvas: var(--color-bg);
+  --color-panel: var(--color-surface);
+  --color-subtle: var(--color-surface-muted);
+  --color-line: var(--color-border);
+  --color-ink: var(--color-text);
+  --color-ink-muted: var(--color-text-muted);
+  --color-brand: var(--color-primary);
+  --color-brand-strong: var(--color-primary-strong);
+  --color-brand-soft: var(--color-primary-soft);
+  --color-on-brand: var(--color-on-primary);
+  --color-aqua: var(--color-accent);
+  --color-info: var(--color-secondary);
+  --color-warn: var(--color-warning);
+  --color-on-warn: var(--color-on-warning);
+  --color-alert: var(--color-danger);
+  --color-ok: var(--color-success);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --shadow-card: 0 1px 2px color-mix(in srgb, var(--color-text) 6%, transparent), 0 4px 16px color-mix(in srgb, var(--color-text) 5%, transparent);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+.leaflet-container {
+  font: inherit;
+  border-radius: var(--radius-lg);
+  z-index: 0;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  body { background: var(--color-surface); }
+}
+.print-only { display: none; }

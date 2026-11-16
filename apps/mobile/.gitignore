@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+dist/
+android/
+ios/
+*.apk
+*.aab
+.env
+expo-env.d.ts
+coverage/
+src/components/map/leaflet-assets.generated.ts

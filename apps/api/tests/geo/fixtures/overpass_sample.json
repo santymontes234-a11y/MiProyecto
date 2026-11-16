@@ -1,0 +1,31 @@
+{
+  "_comment": "Respuesta Overpass SINTÉTICA para pruebas unitarias; IDs y nombres ficticios.",
+  "osm3s": {"timestamp_osm_base": "2026-11-16T00:00:00Z"},
+  "cycleways": {
+    "elements": [
+      {"type": "way", "id": 900001, "tags": {"highway": "cycleway", "name": "Prueba Ciclopista"},
+       "geometry": [{"lat": 20.590, "lon": -100.390}, {"lat": 20.595, "lon": -100.385}]},
+      {"type": "way", "id": 900002, "tags": {"highway": "secondary", "cycleway:right": "lane"},
+       "geometry": [{"lat": 20.580, "lon": -100.400}, {"lat": 20.581, "lon": -100.399}, null]},
+      {"type": "way", "id": 900003, "tags": {"highway": "tertiary", "cycleway": "track"},
+       "geometry": [{"lat": 20.570, "lon": -100.410}, {"lat": 20.572, "lon": -100.405}]},
+      {"type": "way", "id": 900004, "tags": {"highway": "path", "bicycle": "designated", "segregated": "no"},
+       "geometry": [{"lat": 20.560, "lon": -100.420}, {"lat": 20.560, "lon": -100.420}]}
+    ]
+  },
+  "pois": {
+    "elements": [
+      {"type": "node", "id": 800001, "lat": 20.59, "lon": -100.39,
+       "tags": {"amenity": "bicycle_parking", "capacity": "12", "covered": "yes"}},
+      {"type": "way", "id": 800002, "center": {"lat": 20.591, "lon": -100.391},
+       "tags": {"amenity": "bicycle_rental", "name": "Prueba Bici", "operator": "Operador X"}},
+      {"type": "node", "id": 800003, "lat": 20.592, "lon": -100.392,
+       "tags": {"highway": "bus_stop", "name": "Prueba Parada", "ref": "P-17", "route_ref": "12;45, 77"}},
+      {"type": "node", "id": 800004, "lat": 20.593, "lon": -100.393,
+       "tags": {"amenity": "charging_station", "capacity": "n/a"}},
+      {"type": "node", "id": 800005, "lat": 20.594, "lon": -100.394,
+       "tags": {"amenity": "bicycle_repair_station"}},
+      {"type": "node", "id": 800006, "lat": 20.595, "lon": -100.395, "tags": {"amenity": "bench"}}
+    ]
+  }
+}
