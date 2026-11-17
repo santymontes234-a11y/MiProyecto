@@ -172,6 +172,21 @@ test("CRUD de viajes (usuario)", async ({ page, request }) => {
   await shot(page, "08-viaje-detalle.png");
   const tripId = page.url().split("/").pop()!;
 
+  // UPDATE: PATCH /trips/{id}; la API recalcula distancia, CO₂ y puntos
+  const tripRow = `SELECT id, mode, status, round(distance_m) AS distancia_m, round(co2_saved_g::numeric, 1) AS co2_evitado_g, round(co2_emitted_g::numeric, 1) AS co2_emitido_g, points AS puntos, updated_at FROM trips WHERE id = '${tripId}';`;
+  verify("Viajes · antes de editar", tripRow);
+  await page.getByRole("button", { name: /editar/i }).first().click();
+  const dlg = page.getByRole("dialog");
+  await expect(dlg).toBeVisible();
+  await dlg.getByLabel("Medio de transporte").selectOption("BUS");
+  await shot(page, "11-viaje-editar-formulario.png");
+  const patched = page.waitForResponse((r) => r.request().method() === "PATCH" && /\/trips\//.test(r.url()));
+  await dlg.getByRole("button", { name: "Guardar cambios" }).click();
+  expect((await patched).status()).toBe(200);
+  await expect(dlg).toBeHidden();
+  await shot(page, "12-viaje-editar-resultado.png");
+  verify("Viajes · después de editar (UPDATE; CO₂ y puntos recalculados en el servidor)", tripRow);
+
   // DELETE (borrado físico de datos personales, SECURITY.md §5)
   await page.getByRole("button", { name: /eliminar/i }).first().click();
   await shot(page, "09-viaje-eliminar-confirmacion.png");

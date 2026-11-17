@@ -1,0 +1,64 @@
+# Despliegue MANUAL al VPS — DESHABILITADO hasta que el propietario lo configure.
+#
+# Requisitos para que se ejecute (todos):
+#   1. Variable del repositorio DEPLOY_ENABLED = true   (Settings → Secrets and variables → Variables)
+#   2. Environment "production" con revisores obligatorios (Settings → Environments)
+#   3. Secretos del environment: VPS_HOST, VPS_USER, VPS_SSH_PORT, VPS_SSH_KEY (clave privada dedicada),
+#      VPS_KNOWN_HOSTS (salida de: ssh-keyscan -p <puerto> <host>), VPS_APP_DIR (p. ej. /opt/ecomove)
+#   4. Lanzarlo a mano (Actions → Deploy → Run workflow) escribiendo DESPLEGAR.
+# Lo que hace en el VPS: git fetch + checkout del ref indicado y infrastructure/scripts/deploy.sh.
+# Guía: docs/deployment/UPDATE_APPLICATION.md
+name: Deploy (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Rama, tag o commit a desplegar"
+        required: true
+        default: main
+      confirm:
+        description: "Escribe DESPLEGAR para confirmar"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true' && github.event.inputs.confirm == 'DESPLEGAR'
+    runs-on: ubuntu-24.04
+    environment: production
+    timeout-minutes: 40
+    steps:
+      - name: Validar entrada
+        env:
+          REF: ${{ github.event.inputs.ref }}
+        run: |
+          [[ "$REF" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "::error::ref no válido"; exit 1; }
+      - name: Configurar SSH (host verificado, sin aceptar claves desconocidas)
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts && chmod 600 ~/.ssh/known_hosts
+      - name: Desplegar
+        env:
+          REF: ${{ github.event.inputs.ref }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT }}
+          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${VPS_SSH_PORT:-22}" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "set -e; cd '$VPS_APP_DIR' && git fetch --tags origin && git checkout --detach '$REF' && infrastructure/scripts/deploy.sh"
+      - name: Limpiar clave
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

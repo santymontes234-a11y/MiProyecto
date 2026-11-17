@@ -73,7 +73,20 @@ WHERE u.email = 'ana.ejemplo@ejemplo.mx'
 ORDER BY t.started_at DESC
 LIMIT 20 OFFSET 0;
 
--- 2.3 DELETE (Figuras 9 y 10) — borrado físico (datos personales, SECURITY.md §5):
+-- 2.3 UPDATE (Figuras 11 y 12) — PATCH /trips/{id}: cambio de medio BICYCLE → BUS.
+--     después: mode = BUS, co2_saved_g menor, co2_emitted_g > 0, puntos recalculados y
+--     updated_at posterior (el CO₂ se recalcula en el servidor, ADR-002)
+SELECT t.id, t.mode, t.status, round(t.distance_m) AS distancia_m,
+       round(t.co2_saved_g::numeric, 1) AS co2_evitado_g,
+       round(t.co2_emitted_g::numeric, 1) AS co2_emitido_g,
+       t.points AS puntos, t.created_at, t.updated_at
+FROM trips t
+JOIN users u ON u.id = t.user_id
+WHERE u.email = 'ana.ejemplo@ejemplo.mx'
+ORDER BY t.updated_at DESC
+LIMIT 1;
+
+-- 2.4 DELETE (Figuras 9 y 10) — borrado físico (datos personales, SECURITY.md §5):
 --     después: el viaje eliminado ya no existe y quedan 2 viajes
 SELECT count(*) AS viajes_restantes
 FROM trips t

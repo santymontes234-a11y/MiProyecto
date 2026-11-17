@@ -327,6 +327,9 @@ def _confidence(users: int, trip_ends: int, cfg: PriorityConfig) -> Confidence:
     return "baja"
 
 
+NO_CELLS_NOTE = "Sin extremos de viaje en el área y el periodo: no hay celdas que evaluar."
+
+
 def score_cells(
     cells: list[Mapping[str, Any]],
     infra: InfraType,
@@ -360,6 +363,10 @@ def score_cells(
     demand_w = sum(c.weight for c in active if c.kind == "demand")
 
     notes = list(profile.missing_data_notes)
+    if not cells:
+        notes.append(
+            f"{NO_CELLS_NOTE} Resultado: datos insuficientes; no se afirma necesidad en el área."
+        )
     for c in profile.components:
         if not available[c.key]:
             notes.append(

@@ -30,3 +30,26 @@ docker compose -f infrastructure/docker-compose.yml --env-file .env --profile ro
 ```
 
 Sin este perfil, `/routes` responde `503 ROUTING_UNAVAILABLE` y la app móvil usa línea recta.
+
+## Producción (VPS)
+
+Archivos de producción, **preparados pero no desplegados** en ningún servidor:
+
+| Ruta | Contenido |
+|---|---|
+| `docker-compose.prod.yml` | `db` (red interna, sin puertos), `migrate` (job), `api` y `web` en `127.0.0.1`, OSRM opcional (`--profile routing`) |
+| `postgres/init-prod/` | Rol de la aplicación sin superusuario |
+| `nginx/` | Plantillas de Nginx del host: HTTPS, redirecciones, cabeceras, límites de peticiones |
+| `security/` | SSH, fail2ban, sysctl, `daemon.json` de Docker |
+| `systemd/` | Timer de backup diario |
+| `scripts/` | `install_vps.sh`, `generate_secrets.sh`, `configure_nginx.sh`, `deploy.sh`, `backup.sh`, `restore.sh`, `status.sh`, `logs.sh` |
+
+Variables: `.env.production.example` (raíz) → `.env.production` (nunca en Git) con
+`scripts/generate_secrets.sh --domain midominio.mx`.
+
+```bash
+infrastructure/scripts/deploy.sh            # en el VPS: build, migraciones, arranque y verificación
+infrastructure/scripts/status.sh
+```
+
+Guía completa paso a paso: [`docs/deployment/DEPLOYMENT_GUIDE.md`](../docs/deployment/DEPLOYMENT_GUIDE.md).

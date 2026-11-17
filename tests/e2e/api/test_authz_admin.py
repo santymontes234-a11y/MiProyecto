@@ -144,7 +144,9 @@ def test_demotion_removes_admin_rights_immediately(api: Api, super_admin: Accoun
     demoted: Account = make_admin()
     assert api.get("/admin/users", token=demoted.access_token).status_code == 200
     assert set_role(api, super_admin, demoted.id, "USER").status_code == 200
-    assert_error(api.get("/admin/users", token=demoted.access_token), 403)
+    # 403 (rol revisado en cada petición) o 401 (la API revoca las sesiones al cambiar el rol): ambos
+    # quitan el acceso de inmediato; lo que nunca debe pasar es un 200.
+    assert_error(api.get("/admin/users", token=demoted.access_token), (401, 403))
 
 
 def test_role_change_is_audited(api: Api, super_admin: Account, make_user) -> None:

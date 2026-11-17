@@ -31,7 +31,7 @@ x-api-base: &api-base
     context: ../apps/api
     dockerfile: Dockerfile
   env_file:
-    - ../.env.production
+    - ${ECOMOVE_ENV_FILE:-../.env.production}
   logging: *logging
   <<: *hardening
   read_only: true
@@ -204,7 +204,7 @@ services:
 
   osrm-prepare:
     profiles: ["routing"]
-    image: osrm/osrm-backend:v5.27.1
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1
     depends_on:
       osrm-download:
         condition: service_completed_successfully
@@ -228,7 +228,7 @@ services:
 
   osrm-foot: &osrm
     profiles: ["routing"]
-    image: osrm/osrm-backend:v5.27.1
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1
     restart: unless-stopped
     depends_on:
       osrm-prepare:

@@ -1,15 +1,18 @@
 /**
- * Mapa base (observación O1): CARTO Voyager en claro y Dark Matter en oscuro, sobre datos OSM
- * (ADR-005). Mismas URLs que la app Android para que ambos clientes se vean igual.
+ * Mapa base (observación O1), datos OSM (ADR-005): Stadia Maps «Alidade Smooth» en claro y
+ * «Alidade Smooth Dark» en oscuro. CARTO se descartó: desde 2026 sus teselas sin API key devuelven
+ * «API KEY REQUIRED». Stadia funciona sin clave en localhost y, en producción, autoriza por dominio
+ * (se registra en su panel; no hay secreto en el cliente).
  */
 export const BASEMAPS = {
-  light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  light: "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
+  dark: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
 } as const;
 
-export const BASEMAP_SUBDOMAINS = "abcd";
+/** Stadia no usa subdominios; Leaflet ignora {s} si no aparece en la URL. */
+export const BASEMAP_SUBDOMAINS = "a";
 
 export const BASEMAP_ATTRIBUTION =
-  '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer">CARTO</a>';
+  '© <a href="https://stadiamaps.com/" target="_blank" rel="noopener noreferrer">Stadia Maps</a> © <a href="https://openmaptiles.org/" target="_blank" rel="noopener noreferrer">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>';
 
-export const BASEMAP_MAX_ZOOM = 19;
+export const BASEMAP_MAX_ZOOM = 20;

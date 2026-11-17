@@ -29,6 +29,7 @@ htmlcov/
 # Infraestructura: datos locales de despliegue y backups
 .deploy/
 backups/
+restore-config-*/
 *.dump
 *.sql.gz
 

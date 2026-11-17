@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   if (!isSameOriginRequest(request)) return errorResponse(403, "FORBIDDEN", "Solicitud rechazada");
   const refreshToken = (await cookies()).get(REFRESH_COOKIE)?.value;
   // Revoca el refresh en la API; si falla, igual se cierra la sesión local.
-  if (refreshToken) await forward("/auth/logout", { refresh_token: refreshToken }).catch(() => null);
+  if (refreshToken) await forward("/auth/logout", { refresh_token: refreshToken }, request).catch(() => null);
   const res = new NextResponse(null, { status: 204 });
   clearSessionCookies(res);
   return res;

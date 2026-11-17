@@ -13,14 +13,14 @@ function apiOrigin(): string {
 }
 
 /**
- * CSP restrictiva (SECURITY §4). Tiles CARTO (datos OSM) en img-src. 'unsafe-inline' en script-src lo
+ * CSP restrictiva (SECURITY §4). Tiles Stadia Maps (datos OSM) en img-src. 'unsafe-inline' en script-src lo
  * requieren los scripts de hidratación de Next sin nonce; 'unsafe-eval' solo en desarrollo.
  */
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
+  "img-src 'self' data: blob: https://tiles.stadiamaps.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
   `connect-src 'self' ${apiOrigin()}${isDev ? " ws: http://localhost:*" : ""}`,
   "frame-ancestors 'none'",

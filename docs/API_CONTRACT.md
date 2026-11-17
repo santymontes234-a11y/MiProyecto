@@ -5,7 +5,7 @@
 > (`AGENTS.md` §4). Implementación ejecutable: `apps/api/app/schemas/` + `apps/api/app/routers/`.
 > Tipos TypeScript equivalentes: `packages/shared/src/types/api.ts`.
 >
-> Versión del contrato: **1.2.1** — 2026-11-16 · Lo nuevo de 1.1 va marcado con **🆕**; lo de 1.2, con **🆕 1.2**.
+> Versión del contrato: **1.2.2** — 2026-11-16 · Lo nuevo de 1.1 va marcado con **🆕**; lo de 1.2, con **🆕 1.2**.
 > Todo 1.1.0 es aditivo respecto a 1.0.x, salvo los cambios de comportamiento marcados con **⚠**.
 
 ## 0. Convenciones generales
@@ -278,6 +278,7 @@ pasados). Los logros pueden sumar `bonus_points` (§9). `CANCELLED` = 0 puntos.
 Cálculo (solo backend, ADR-002), con `f(v)` = factor g/km del tipo de vehículo (tabla `vehicle_types`,
 con fuente citada):
 - CAR / CARPOOL: `co2_emitted_g = km × f(v) / occupants`; `co2_saved_g = km × f(v) − co2_emitted_g`
+  (1.2.2: en estos medios `emission_factor_g_per_km` se devuelve **por persona**, `f(v) / occupants`)
   (ahorro frente a ir solo en el mismo vehículo).
 - Resto de medios: sin cambios (`km × (f(CAR) − f(mode))`), con `f(CAR)` = `f(SEDAN)` o el
   `default_vehicle_type` del usuario.
@@ -343,7 +344,7 @@ OSM llevan `attributes.source = "osm"`, `attributes.osm_id` y, si existe, `attri
 | GET | `/admin/users` | ADMIN | `page, page_size, q?, role?, is_active?` | `200 Paginated<User>` |
 | GET | `/admin/users/{user_id}` | ADMIN | — | `200 User` |
 | PATCH | `/admin/users/{user_id}/status` | ADMIN | `{ "is_active": bool, "reason"?: str(5..500) /* 🆕 */ }` | `200 User` |
-| PATCH | `/admin/users/{user_id}/role` | SUPER_ADMIN | `{ "role": Role }` | `200 User` |
+| PATCH | `/admin/users/{user_id}/role` | SUPER_ADMIN | `{ "role": Role }` | `200 User` · ⚠ revoca las sesiones del usuario: sus access dan `401 TOKEN_INVALID` (1.2.2) |
 | DELETE | 🆕 `/admin/users/{user_id}` | SUPER_ADMIN | `{ "reason": str(5..500) }` | `204` |
 | GET | `/admin/stats/overview` | ADMIN | `from?, to?` | `200 AdminOverview` |
 | GET | 🆕 `/admin/trips` | ADMIN | `page, page_size, user_id?, mode?, status?, source?, from?, to?` | `200 Paginated<AdminTripSummary>` |
@@ -669,3 +670,4 @@ Definición ejecutable de los campos: `apps/api/app/schemas/geo_analytics.py`; m
 | 1.1.1 | 2026-11-16 | §5.1: `code` de parada = código oficial (admin), único; la etiqueta `ref` de OSM va en `attributes.ref` (no única). Corrige el fallo de la migración con refs de OSM duplicados | architect |
 | 1.2.0 | 2026-11-16 | Observaciones del usuario: `vehicle_type` y `occupants` en viajes y estimaciones (§4.3), `/catalog/vehicle-types` y `Preferences.default_vehicle_type` (§8), búsqueda de lugares `/geocode` (§12.1). Todo aditivo y opcional; sin cambios incompatibles | architect |
 | 1.2.1 | 2026-11-16 | §12.1: `Place.source` admite `"zone"` (búsqueda de municipios y zonas) y el orden de búsqueda es zonas → POIs → Nominatim. Factor `SEDAN` = 174 g/km (EPA 2026, DATASETS.md); los viajes ya guardados conservan su factor | architect (propuesta backend + geo) |
+| 1.2.2 | 2026-11-17 | Aclaraciones sin cambio de forma (QA Q12): cambiar el rol de un usuario revoca sus sesiones; en CAR/CARPOOL `emission_factor_g_per_km` es por persona | architect |

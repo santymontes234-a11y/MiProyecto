@@ -1,0 +1,13 @@
+# Ejecuta ecomove-backup.service todos los días a las 03:15 (hora del servidor, UTC por defecto).
+# Activar:  sudo systemctl enable --now ecomove-backup.timer
+# Ver:      systemctl list-timers ecomove-backup.timer
+[Unit]
+Description=EcoMove Querétaro - backup diario
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

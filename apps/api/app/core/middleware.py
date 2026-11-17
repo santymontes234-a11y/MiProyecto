@@ -116,12 +116,12 @@ class SecurityMiddleware:
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
                 if received > s.max_body_bytes:
-                    raise _BodyTooLarge
+                    raise _BodyTooLargeError
             return message
 
         try:
             await self.app(scope, limited_receive, send_wrapper)
-        except _BodyTooLarge:
+        except _BodyTooLargeError:
             await reject(413, "PAYLOAD_TOO_LARGE", "El cuerpo de la petición es demasiado grande")
         finally:
             logger.info(
@@ -136,5 +136,5 @@ class SecurityMiddleware:
             )
 
 
-class _BodyTooLarge(Exception):
+class _BodyTooLargeError(Exception):
     pass

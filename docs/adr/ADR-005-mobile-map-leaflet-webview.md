@@ -17,15 +17,16 @@ Hay que revisar esta decisión si en el futuro se adopta MapLibre Native.
 ## Nota 2026-11-16 — Estilo del mapa (observación O1)
 
 El usuario consideró «feo» el estilo de `tile.openstreetmap.org` y pidió algo parecido a Google Maps.
-Sin cambiar de motor ni usar Google, mobile pasa a tiles raster de **CARTO** con datos OSM:
+Sin cambiar de motor ni usar Google, mobile cambia de proveedor de tiles raster (datos OSM):
 
-- Claro: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png` (Voyager).
-- Oscuro: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png` (Dark Matter); se elimina
-  el filtro CSS de inversión.
-- Atribución visible: «© OpenStreetMap contributors © CARTO».
-- Configurables con `EXPO_PUBLIC_TILE_URL` y `EXPO_PUBLIC_TILE_URL_DARK`.
+- Con `EXPO_PUBLIC_STADIA_API_KEY`: **Stadia Maps** Alidade Smooth (claro) y Alidade Smooth Dark (oscuro), con
+  `?api_key=` porque el WebView con HTML local no envía Referer. Atribución: «© Stadia Maps © OpenMapTiles ©
+  OpenStreetMap contributors». La clave vive solo en `apps/mobile/.env` o en variables de EAS.
+- Sin clave: `tile.openstreetmap.org` con inversión CSS en oscuro. Ojo: OSM bloquea las peticiones sin Referer
+  (devuelve un tile «Access blocked»), así que en el APK la clave es necesaria.
+- CARTO se probó y se descartó: desde 2026-11 responde «API KEY REQUIRED».
 
 Además: pines en forma de gota con sombra (A/B), POIs como puntos con borde, ubicación del usuario
 con halo, controles de zoom de 44 dp con sombra, y rutas con borde (*casing*) blanco u oscuro bajo la
-línea de color. El uso gratuito de CARTO tiene límites; antes de producción hay que contratar un plan
+línea de color. El plan gratuito de Stadia tiene límites; antes de producción hay que contratar un plan
 o servir tiles propios (ARCHITECTURE §10).

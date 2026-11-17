@@ -72,7 +72,7 @@ services:
 
   osrm-prepare:
     profiles: ["routing"]
-    image: osrm/osrm-backend:v5.27.1
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1   # Docker Hub solo publica hasta v5.25.0
     depends_on:
       osrm-download:
         condition: service_completed_successfully
@@ -94,7 +94,7 @@ services:
 
   osrm-foot: &osrm
     profiles: ["routing"]
-    image: osrm/osrm-backend:v5.27.1
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1   # Docker Hub solo publica hasta v5.25.0
     restart: unless-stopped
     depends_on:
       osrm-prepare:

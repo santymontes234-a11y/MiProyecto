@@ -23,8 +23,9 @@ Create Date: 2026-11-16 18:00:00+00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision: str = "0006"
 down_revision: str | None = "0005"
@@ -58,14 +59,14 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("user_id"),
     )
-    op.execute(f"""
+    op.execute("""
         INSERT INTO user_preferences (user_id, language, default_mode, weekly_goal_trips, email_notifications)
         SELECT u.id,
                CASE WHEN u.preferences->>'language' IN ('es', 'en') THEN u.preferences->>'language' ELSE 'es' END,
                CASE WHEN u.preferences->>'default_mode' IN
                          ('WALK','BICYCLE','E_SCOOTER','BUS','CARPOOL','MOTORCYCLE','CAR')
                     THEN (u.preferences->>'default_mode')::transport_mode END,
-               CASE WHEN u.preferences->>'weekly_goal_trips' ~ '^[0-9]{{1,3}}$'
+               CASE WHEN u.preferences->>'weekly_goal_trips' ~ '^[0-9]{1,3}$'
                          AND (u.preferences->>'weekly_goal_trips')::int BETWEEN 1 AND 100
                     THEN (u.preferences->>'weekly_goal_trips')::smallint END,
                COALESCE(CASE WHEN jsonb_typeof(u.preferences->'email_notifications') = 'boolean'

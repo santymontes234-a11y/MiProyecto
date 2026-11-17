@@ -37,17 +37,18 @@ def test_vehicle_types_catalog_has_no_emission_factor(api: Api, v12: None) -> No
 
 def test_co2_with_occupants_is_split_between_them(api: Api, user_a: Account, v12: None) -> None:
     """CAR/CARPOOL: emitido = km·f(v)/ocupantes; ahorrado = km·f(v) − emitido."""
+    alone = api.post("/trips", token=user_a.access_token,
+                     json=trip_payload(mode="CAR", vehicle_type="SUV", occupants=1))
+    assert alone.status_code == 201, alone.text
     resp = api.post("/trips", token=user_a.access_token,
                     json=trip_payload(mode="CARPOOL", vehicle_type="SUV", occupants=3))
     assert resp.status_code == 201, resp.text
     trip = resp.json()
     assert trip["vehicle_type"] == "SUV" and trip["occupants"] == 3
-    total = trip["co2_emitted_g"] + trip["co2_saved_g"]
-    assert total > 0
-    assert trip["co2_emitted_g"] == pytest.approx(total / 3, rel=0.01)
-    assert trip["co2_saved_g"] == pytest.approx(total * 2 / 3, rel=0.01)
-    assert trip["co2_emitted_g"] == pytest.approx(trip["distance_m"] / 1000 * trip["emission_factor_g_per_km"] / 3,
-                                                  rel=0.02)
+    km_f = alone.json()["co2_emitted_g"]  # misma traza, un ocupante → km·f(SUV)
+    assert km_f > 0 and alone.json()["distance_m"] == pytest.approx(trip["distance_m"], rel=0.001)
+    assert trip["co2_emitted_g"] == pytest.approx(km_f / 3, rel=0.01)
+    assert trip["co2_saved_g"] == pytest.approx(km_f * 2 / 3, rel=0.01)
 
 
 def test_car_alone_saves_nothing(api: Api, user_a: Account, v12: None) -> None:

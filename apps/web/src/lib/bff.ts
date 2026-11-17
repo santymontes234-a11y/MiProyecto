@@ -3,6 +3,7 @@
  * y gestiona la cookie HttpOnly del refresh token (ADR-003).
  */
 import "server-only";
+import { isIP } from "node:net";
 import { NextResponse } from "next/server";
 import { isTokenPair, type ApiErrorBody, type MessageResponse, type TokenPair } from "@ecomove/shared";
 
@@ -23,11 +24,30 @@ export function errorResponse(status: number, code: string, message: string): Ne
   return NextResponse.json(body, { status, headers: { "cache-control": "no-store" } });
 }
 
-export async function forward(path: string, body: unknown): Promise<Response> {
+/**
+ * IP real del cliente según el proxy de entrada (nginx): `x-real-ip` o, si falta, el primer valor
+ * de `x-forwarded-for`. Solo se devuelve si es una IP válida; nunca se reenvía texto arbitrario. La API
+ * solo confía en este header si llega desde FORWARDED_ALLOW_IPS (límite de logins por IP).
+ */
+export function clientIp(request: Request): string | null {
+  // x-real-ip primero: nginx la fija con $remote_addr; el primer valor de x-forwarded-for podría
+  // venir del cliente si un proxy usa $proxy_add_x_forwarded_for.
+  const candidates = [request.headers.get("x-real-ip"), request.headers.get("x-forwarded-for")?.split(",")[0]];
+  for (const raw of candidates) {
+    const ip = raw?.trim();
+    if (ip && ip.length <= 45 && isIP(ip) !== 0) return ip;
+  }
+  return null;
+}
+
+export async function forward(path: string, body: unknown, request?: Request): Promise<Response> {
+  const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
+  const ip = request ? clientIp(request) : null;
+  if (ip) headers["X-Forwarded-For"] = ip;
   try {
     return await fetch(`${API}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers,
       body: JSON.stringify(body),
       cache: "no-store",
       signal: AbortSignal.timeout(15_000),

@@ -17,6 +17,26 @@ npm run build -w @ecomove/web
 La API (`apps/api`) debe estar levantada (`npm run infra:up`). Sin ella, las páginas públicas
 muestran «—» y avisos, y el login informa de que no hay conexión.
 
+### Datos y cuentas de demostración
+
+Con la API levantada, carga los datos ficticios (idempotente) desde la raíz del monorepo:
+
+```bash
+docker compose -f infrastructure/docker-compose.yml --env-file .env exec -T db psql -v ON_ERROR_STOP=1 -U ecomove -d ecomove < database/demo_seed.sql
+```
+
+Todas las cuentas `@ejemplo.mx` usan la contraseña `EcoMove-Demo-2026` (solo datos ficticios de
+desarrollo; la BD de producción no los incluye):
+
+| Rol | Correo | Entra a |
+|---|---|---|
+| SUPER_ADMIN | `sofia.ramirez@ejemplo.mx` | `/admin` (incluye eliminar usuarios) |
+| ADMIN | `diego.hernandez@ejemplo.mx` | `/admin` |
+| USER | `ana.garcia@ejemplo.mx` | `/app` |
+
+Las estadísticas públicas de la portada se regeneran cada 5 minutos (ISR); tras cargar el seed
+pueden mostrar «—» hasta la siguiente regeneración.
+
 ## Reglas que sigue esta app
 
 | Regla | Dónde |
@@ -59,7 +79,7 @@ tests/               Vitest + Testing Library
 
 ## Contrato 1.2
 
-- Mapa base CARTO Voyager / Dark Matter (datos OSM) con la misma URL que Android (`src/components/map/tiles.ts`).
+- Mapa base Stadia Alidade Smooth / Smooth Dark (datos OSM; CARTO ya exige API key) (`src/components/map/tiles.ts`).
 - Búsqueda de lugares con `api.geocode.search` (`PlaceSearch`): mapa público, registro de viajes y panel de estaciones.
 - Tipo de auto y ocupantes (CAR/CARPOOL) en registro, edición y estimación de viajes; preferencia `default_vehicle_type`.
 - Registrar viaje: `/app/viajes/nuevo` (`/routes` + `POST /trips` con `source = PLANNED`); edición con `PATCH /trips/{id}`.

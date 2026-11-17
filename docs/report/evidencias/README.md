@@ -30,7 +30,8 @@ tests/e2e/run-local.sh evidence
 | — | Create | Los viajes se registran desde la aplicación Android, que envía la traza completa al terminar (ADR-004). La alta se verifica en la base con la consulta 2.1 de `verificacion.sql`: distancia y CO₂ calculados por el servidor. |
 | `07-viaje-listar.png` | Read | **Figura 7.** Listado paginado de los viajes del usuario con distancia, duración y CO₂ evitado, filtrado por su identificador en la consulta. |
 | `08-viaje-detalle.png` | Read | **Figura 8.** Detalle de un viaje con su traza sobre OpenStreetMap y los indicadores calculados en la base de datos. |
-| — | Update | Pendiente: `PATCH /trips/{trip_id}` (contrato 1.1, §4) aún no está implementado en la API ni expuesto en la web. Se añadirá la captura cuando exista. |
+| `11-viaje-editar-formulario.png` | Update | **Figura 11.** Edición de un viaje propio: cambio del medio de transporte (bicicleta → autobús) en el formulario de edición. |
+| `12-viaje-editar-resultado.png` | Update | **Figura 12.** Resultado de la edición (`PATCH /trips/{id}`): el servidor recalcula el CO₂ evitado y emitido y los puntos, y actualiza `updated_at` (consulta 2.3 de `verificacion.sql`). |
 | `09-viaje-eliminar-confirmacion.png` | Delete | **Figura 9.** Confirmación previa a la eliminación de un viaje propio. |
 | `10-viaje-eliminar-resultado.png` | Delete | **Figura 10.** Resultado de la eliminación: el viaje se borra físicamente de la tabla `trips` (dato personal) y desaparece del listado. |
 

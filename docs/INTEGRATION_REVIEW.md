@@ -83,3 +83,45 @@ pruebas de rate limit en un job aparte de la CI.
   (`/routes`, `/admin/analytics/distance`). `zone_kind` → `kind`.
 - Etapa 3 (OSM) ✅: 924 tramos de ciclovía y 1037 POIs; `/map/*` devuelve datos reales.
 - Pendiente: implementación backend 1.1; servicio `osrm` en compose (architect + geo); E2E 1.1 (QA).
+
+## Revisión QA/seguridad final — 2026-11-17 (cierre del proyecto, agente QA)
+
+Entorno: harness aislado `tests/e2e/run-local.sh` (PostGIS desechable, API :8099, web `next start` :3099,
+secretos aleatorios, solo cuentas ficticias `@example.com`/`@ejemplo.mx`).
+
+**Pruebas**
+
+| Batería | Resultado |
+|---|---|
+| `tests/e2e/api` completa, `E2E_STRICT_CONTRACT=1` y `E2E_RUN_RATE_LIMIT=1` | 122 pasan, 4 fallan, 1 xfail. Los 4 fallos eran desajustes de los tests con el contrato (ver Q9–Q11); tras corregir los tests, los 19 casos afectados pasan |
+| Contrato 1.2 (`test_contract_1_2.py`): CO₂ con ocupantes, 422 de `vehicle_type` en medios sin vehículo, límites de ocupantes, `/geocode` (401/422 y 30/min → 429 en la 31.ª), clientes sin llamadas a Nominatim | ✅ 12/12 en modo estricto |
+| Regresión de registro (correo nuevo → 201/202, nunca `EMAIL_ALREADY_REGISTERED`) | ✅ |
+| Evidencias CRUD R15 (`run-local.sh evidence`) | ✅ 2/2: POIs C/R/U/D y viajes R/U/D con captura y SQL; el alta de viajes se verifica por SQL (llega desde Android) |
+
+**Hallazgos cerrados** (comprobados en código o con la batería)
+
+| # | Hallazgo | Comprobación |
+|---|---|---|
+| Q1 / SEC-01 | Login CSRF y BFF duplicado | Solo queda `app/api/session/*`; cada handler llama a `isSameOriginRequest` y valida el body con zod |
+| Q2 | Tipos duplicados en `lib/api/types.ts` | Carpeta eliminada; la web usa `@ecomove/shared` |
+| Q3 | La web no compilaba | `next build` OK |
+| Q4 / SEC-02..05 | Cookie `em_at`, sin CSP, `API_BASE_URL` incoherente, `proxy.ts` con rutas inexistentes | Sin `em_at`/`em_rt`; CSP y cabeceras en `next.config.ts`; solo `API_INTERNAL_BASE_URL`; el matcher cubre `/app` y `/admin`, que existen |
+| Q5 / SEC-06 | Build de producción de mobile con HTTP | `config.ts` lanza un error si no es HTTPS en producción |
+| Q6 / SEC-07 | Códigos de error fuera del contrato | Todos en UPPER_SNAKE_CASE (lo exige `assert_error`) |
+| Q7 / SEC-08 | Esquema divergente | Resuelto por el architect (enum `user_role`, `emission_factors`) |
+| Q8 / SEC-09 | Dockerfile con dependencias dev y `\|\| true` | Ya no aparecen |
+| SEC-13 | `assert` en código de la API | No queda ninguno en `apps/api/app` |
+| SEC-14 | Recuperación de contraseña fuera del contrato | Implementada (1.1). El test `xfail` apuntaba a una ruta antigua (`/auth/forgot-password`): se corrigió a `/auth/password-reset/request` y pasa (202 idéntico, sin enumeración) |
+| Q9 | Los tests suponían f(CAR) = 192 g/km | Contrato 1.2.1: SEDAN = 174. Tests actualizados (`F_SEDAN`) |
+| Q10 | El test de ocupantes suponía que `Trip.emission_factor_g_per_km` es f(v) | La API devuelve el factor ya dividido entre los ocupantes. El test compara ahora con el mismo viaje con 1 ocupante (contrato §4.3) |
+| Q11 | Al degradar a un admin, el test esperaba 403 | La API revoca la sesión al cambiar el rol (401 `TOKEN_INVALID`), que es más estricto. El test acepta 401 o 403: lo que se exige es que el acceso se pierda de inmediato |
+
+**Hallazgos abiertos**
+
+| # | Hallazgo | Severidad | Dueño | Recomendación |
+|---|---|---|---|---|
+| SEC-10 | Rate limit en memoria por proceso (N réplicas → N× el límite, también en `/geocode`) | Baja | backend | Redis antes de escalar horizontalmente |
+| SEC-11 | `client.parse()` hace `JSON.parse` sin `try`: un 502 en HTML lanza `SyntaxError`, no `ApiError` | Baja | shared | Envolver en `try` y lanzar `ApiError(status, 'INTERNAL_ERROR')` |
+| SEC-12 | `npm audit`: avisos moderados en tooling de Expo | Baja | deps | Riesgo aceptado; no se volvió a auditar en este cierre |
+| Q12 | El contrato no documenta que cambiar el rol revoca las sesiones, ni qué significa `emission_factor_g_per_km` en CAR/CARPOOL (por persona) | Baja | architect | Añadir una línea en §1 (roles) y §4.3 |
+| Q13 | En el harness aislado, el envío de correo falla (`ConnectionRefusedError`) porque no hay Mailpit; el registro responde igual. Es esperado, pero confirma que un SMTP caído no bloquea el alta | Info | — | Sin acción |

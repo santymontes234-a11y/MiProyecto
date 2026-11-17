@@ -1,0 +1,16 @@
+# Backup diario de EcoMove Querétaro. Instalar en /etc/systemd/system/ (install_vps.sh lo hace).
+# __APP_DIR__ lo sustituye install_vps.sh. Corre como root para poder copiar /etc/letsencrypt.
+[Unit]
+Description=EcoMove Querétaro - backup de PostgreSQL y configuración
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=__APP_DIR__
+ExecStart=__APP_DIR__/infrastructure/scripts/backup.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

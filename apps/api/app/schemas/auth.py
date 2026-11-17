@@ -25,7 +25,7 @@ class RefreshRequest(InputModel):
 class TokenPair(OutputModel):
     access_token: str
     refresh_token: str
-    token_type: Literal["bearer"] = "bearer"
+    token_type: Literal["bearer"] = "bearer"  # noqa: S105
     expires_in: int
     user: UserOut
 

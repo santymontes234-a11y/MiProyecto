@@ -2,7 +2,7 @@ import { LEAFLET_CSS, LEAFLET_JS } from './leaflet-assets.generated';
 
 /**
  * Documento HTML del mapa: Leaflet embebido (sin CDN) y puente postMessage.
- * Solo los tiles (CARTO Voyager / Dark Matter, datos OSM) salen a la red (ARCHITECTURE §2, ADR-005).
+ * Solo los tiles (Stadia con clave u OSM sin clave) salen a la red (ARCHITECTURE §2, ADR-005).
  */
 const BRIDGE = String.raw`
 (function () {
@@ -40,16 +40,18 @@ const BRIDGE = String.raw`
     var changed = !theme || theme.dark !== t.dark;
     theme = t;
     document.body.classList.toggle('dark', !!t.dark);
+    // Sin tiles oscuros propios (OSM): se invierten los tiles claros por CSS.
+    document.body.classList.toggle('invert-tiles', !!t.dark && !!tileUrls && !tileUrls.hasDark);
     if (changed && tiles && tileUrls) tiles.setUrl(t.dark ? tileUrls.dark : tileUrls.light);
   }
   var handlers = {
     init: function (m) {
-      tileUrls = { light: m.tileUrl, dark: m.tileUrlDark || m.tileUrl };
+      tileUrls = { light: m.tileUrl, dark: m.tileUrlDark || m.tileUrl, hasDark: !!m.tileUrlDark };
       applyTheme(m.theme);
       map = L.map('map', { zoomControl: false, attributionControl: true, preferCanvas: false, zoomSnap: 0.5 }).setView(ll(m.center), m.zoom);
       L.control.zoom({ position: 'bottomright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(map);
       map.attributionControl.setPrefix(false);
-      tiles = L.tileLayer(m.theme.dark ? tileUrls.dark : tileUrls.light, { maxZoom: 20, subdomains: 'abcd', detectRetina: false, attribution: m.attribution, crossOrigin: true }).addTo(map);
+      tiles = L.tileLayer(m.theme.dark ? tileUrls.dark : tileUrls.light, { maxZoom: 19, detectRetina: false, attribution: m.attribution, crossOrigin: true }).addTo(map);
       tiles.on('tileerror', function () { post({ type: 'error', message: 'tiles' }); });
       map.on('click', function (e) { post({ type: 'tap', coord: [e.latlng.lng, e.latlng.lat] }); });
       map.on('moveend', emitMove);
@@ -103,6 +105,7 @@ const BRIDGE = String.raw`
 const STYLE = `
 html, body, #map { height: 100%; margin: 0; padding: 0; background: #F2EFE9; }
 body.dark, body.dark #map { background: #0E1626; }
+body.invert-tiles .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9); }
 .leaflet-container { font-family: -apple-system, Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 .eco-icon { background: transparent; border: none; }
 .pin { position: absolute; left: 2px; top: 0; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);

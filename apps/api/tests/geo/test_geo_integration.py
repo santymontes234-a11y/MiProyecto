@@ -11,7 +11,7 @@ from sqlalchemy import text
 
 from app.core.errors import register_error_handlers
 from app.routers import geo_analytics
-from app.services.geo_analytics import analytics, repository
+from app.services.geo_analytics import analytics, priority_index, repository
 from app.services.geo_analytics.filters import build_filters
 from tests.conftest import PREFIX, auth_header, make_user, trip_payload
 from tests.geo.conftest import insert_official_trips
@@ -248,10 +248,16 @@ def test_priority_endpoint_is_explainable(geo_client: TestClient, client: Any) -
         params={**RANGE, "bbox": BBOX, "infra": "bus_stop"},
         headers=admin,
     )
-    cell = r.json()["features"][0]["properties"]
-    gap = next(c for c in cell["components"] if c["kind"] == "gap")
-    assert gap["available"] is False
-    assert any("no disponible" in n for n in r.json()["notes"])
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert any("no disponible" in n for n in body["notes"])
+    if not body["features"]:
+        # Sin viajes oficiales en el área: respuesta vacía y explícita, nunca un puntaje.
+        assert any(priority_index.NO_CELLS_NOTE in n for n in body["notes"])
+    else:
+        cell = body["features"][0]["properties"]
+        gap = next(c for c in cell["components"] if c["kind"] == "gap")
+        assert gap["available"] is False
 
 
 def test_authorization_and_errors(geo_client: TestClient, client: Any) -> None:

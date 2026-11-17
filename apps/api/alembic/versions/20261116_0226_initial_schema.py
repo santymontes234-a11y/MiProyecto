@@ -7,9 +7,10 @@ Create Date: 2026-11-16 02:26:19.815816+00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from geoalchemy2 import Geometry
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision: str = '0001'
 down_revision: str | None = None

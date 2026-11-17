@@ -201,7 +201,15 @@ export function createApiClient(options: ApiClientOptions) {
     if (res.status === 204) return undefined as T;
     if (as === 'blob' && res.ok) return (await res.blob()) as T;
     const text = await res.text();
-    const data: unknown = text ? JSON.parse(text) : null;
+    let data: unknown = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // Respuesta no JSON (p. ej. HTML de un proxy 502): error tipado, nunca SyntaxError suelto.
+        throw new ApiError(res.status, res.ok ? 'INVALID_RESPONSE' : 'INTERNAL_ERROR', `HTTP ${res.status}: respuesta no JSON`);
+      }
+    }
     if (res.ok) return data as T;
     if (isApiErrorBody(data)) {
       throw new ApiError(res.status, data.error.code, data.error.message, data.error.details);

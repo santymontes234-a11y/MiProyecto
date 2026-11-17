@@ -23,7 +23,7 @@ SELECT p.id, p.name, p.category, b.capacity AS capacidad, ST_AsText(p.location) 
 ```text
 id                  |            name             |   category   | capacidad |         ubicacion          | is_active |          created_at           
 --------------------------------------+-----------------------------+--------------+-----------+----------------------------+-----------+-------------------------------
- e2166748-de9a-40c2-b807-4cdd5e72212c | Ciclopuerto Ejemplo Alameda | BIKE_PARKING |        20 | POINT(-100.38998 20.58876) | t         | 2026-11-17 02:23:42.773969+00
+ b8f2417a-9dc6-4840-b836-725b7f782483 | Ciclopuerto Ejemplo Alameda | BIKE_PARKING |        20 | POINT(-100.38998 20.58876) | t         | 2026-11-17 13:33:53.406265+00
 (1 row)
 ```
 
@@ -36,7 +36,7 @@ SELECT p.id, p.name, b.capacity AS capacidad, p.is_active, p.created_at, p.updat
 ```text
 id                  |                  name                  | capacidad | is_active |          created_at           |          updated_at           
 --------------------------------------+----------------------------------------+-----------+-----------+-------------------------------+-------------------------------
- e2166748-de9a-40c2-b807-4cdd5e72212c | Ciclopuerto Ejemplo Alameda (ampliado) |        35 | t         | 2026-11-17 02:23:42.773969+00 | 2026-11-17 02:23:48.304487+00
+ b8f2417a-9dc6-4840-b836-725b7f782483 | Ciclopuerto Ejemplo Alameda (ampliado) |        35 | t         | 2026-11-17 13:33:53.406265+00 | 2026-11-17 13:34:37.267303+00
 (1 row)
 ```
 
@@ -49,7 +49,7 @@ SELECT id, name, is_active, updated_at FROM pois WHERE name LIKE 'Ciclopuerto Ej
 ```text
 id                  |                  name                  | is_active |          updated_at           
 --------------------------------------+----------------------------------------+-----------+-------------------------------
- e2166748-de9a-40c2-b807-4cdd5e72212c | Ciclopuerto Ejemplo Alameda (ampliado) | f         | 2026-11-17 02:23:50.637166+00
+ b8f2417a-9dc6-4840-b836-725b7f782483 | Ciclopuerto Ejemplo Alameda (ampliado) | f         | 2026-11-17 13:34:39.733076+00
 (1 row)
 ```
 
@@ -62,9 +62,9 @@ SELECT action, entity_type, created_at FROM audit_logs WHERE entity_type = 'poi'
 ```text
 action    | entity_type |          created_at           
 -------------+-------------+-------------------------------
- POI_CREATED | poi         | 2026-11-17 02:23:42.773969+00
- POI_UPDATED | poi         | 2026-11-17 02:23:48.304487+00
- POI_DELETED | poi         | 2026-11-17 02:23:50.637166+00
+ POI_CREATED | poi         | 2026-11-17 13:33:53.406265+00
+ POI_UPDATED | poi         | 2026-11-17 13:34:37.267303+00
+ POI_DELETED | poi         | 2026-11-17 13:34:39.733076+00
 (3 rows)
 ```
 
@@ -90,16 +90,42 @@ SELECT t.id, t.mode, round(t.distance_m) AS distancia_m, t.duration_s, round(t.c
 ```text
 id                  |  mode   | distancia_m | duration_s | co2_evitado_g | emission_factor_g_per_km 
 --------------------------------------+---------+-------------+------------+---------------+--------------------------
- f674f132-b44e-4698-9a81-3c12fad2de3a | BICYCLE |        1950 |       1080 |         374.5 |                        0
- 70a0d130-ef78-4157-9489-9941dc75aa57 | BUS     |        3811 |       1500 |         472.6 |                       68
- 1569cb43-dba3-49b5-a341-6178e29a63b9 | WALK    |         700 |        900 |         134.3 |                        0
+ f6fe8ed9-b27d-42a8-8d59-16b222f4729e | BICYCLE |        1950 |       1080 |         339.4 |                        0
+ 0c70bfe0-b73e-4401-8e2c-ab285d8425db | BUS     |        3811 |       1500 |         404.0 |                       68
+ 573199d6-4db5-4fc5-a6c0-827f11a1640b | WALK    |         700 |        900 |         121.7 |                        0
 (3 rows)
+```
+
+**Viajes · antes de editar**
+
+```sql
+SELECT id, mode, status, round(distance_m) AS distancia_m, round(co2_saved_g::numeric, 1) AS co2_evitado_g, round(co2_emitted_g::numeric, 1) AS co2_emitido_g, points AS puntos, updated_at FROM trips WHERE id = 'f6fe8ed9-b27d-42a8-8d59-16b222f4729e';
+```
+
+```text
+id                  |  mode   |  status   | distancia_m | co2_evitado_g | co2_emitido_g | puntos |          updated_at          
+--------------------------------------+---------+-----------+-------------+---------------+---------------+--------+------------------------------
+ f6fe8ed9-b27d-42a8-8d59-16b222f4729e | BICYCLE | COMPLETED |        1950 |         339.4 |           0.0 |      3 | 2026-11-17 13:34:41.33247+00
+(1 row)
+```
+
+**Viajes · después de editar (UPDATE; CO₂ y puntos recalculados en el servidor)**
+
+```sql
+SELECT id, mode, status, round(distance_m) AS distancia_m, round(co2_saved_g::numeric, 1) AS co2_evitado_g, round(co2_emitted_g::numeric, 1) AS co2_emitido_g, points AS puntos, updated_at FROM trips WHERE id = 'f6fe8ed9-b27d-42a8-8d59-16b222f4729e';
+```
+
+```text
+id                  | mode |  status   | distancia_m | co2_evitado_g | co2_emitido_g | puntos |          updated_at           
+--------------------------------------+------+-----------+-------------+---------------+---------------+--------+-------------------------------
+ f6fe8ed9-b27d-42a8-8d59-16b222f4729e | BUS  | COMPLETED |        1950 |         206.7 |         132.6 |      2 | 2026-11-17 13:34:45.685983+00
+(1 row)
 ```
 
 **Viajes · después de eliminar (DELETE)**
 
 ```sql
-SELECT count(*) AS existe FROM trips WHERE id = 'f674f132-b44e-4698-9a81-3c12fad2de3a';
+SELECT count(*) AS existe FROM trips WHERE id = 'f6fe8ed9-b27d-42a8-8d59-16b222f4729e';
 ```
 
 ```text

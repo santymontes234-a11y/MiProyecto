@@ -1,0 +1,38 @@
+# Build Android en EAS (Expo) — MANUAL y DESHABILITADO hasta que el propietario lo configure.
+# Requisitos: variable ANDROID_BUILD_ENABLED=true, secreto EXPO_TOKEN y la variable
+# EXPO_PUBLIC_API_BASE_URL (https://api.<tu-dominio>/api/v1) creada en EAS para el entorno elegido.
+# NO publica en Google Play (no ejecuta "eas submit"). Guía: docs/deployment/ANDROID_BUILD.md
+name: Android build (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Perfil de eas.json"
+        required: true
+        default: production-apk
+        type: choice
+        options: [preview, production-apk, production]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: vars.ANDROID_BUILD_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: eas build (sin esperar; el APK/AAB queda en expo.dev)
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_NO_VCS: "1"
+          EAS_PROJECT_ROOT: ../..
+          PROFILE: ${{ github.event.inputs.profile }}
+        run: npx eas-cli@latest build --platform android --profile "$PROFILE" --non-interactive --no-wait

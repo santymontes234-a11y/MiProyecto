@@ -250,10 +250,10 @@ def test_password_change_enforces_policy(api: Api, make_user) -> None:
 # --------------------------- Recuperación de contraseña ----------------------
 
 
-@pytest.mark.xfail(reason="Fuera del contrato 1.0.0: propuesta backend-auth-account-admin-extensions "
-                          "pendiente. Cuando se apruebe, debe responder 202 uniforme.", strict=False)
-def test_forgot_password_uniform_response(api: Api, user_a: Account) -> None:
-    known = api.post("/auth/forgot-password", json={"email": user_a.email})
-    unknown = api.post("/auth/forgot-password", json={"email": unique_email()})
+def test_forgot_password_uniform_response(api: Api, user_a: Account, require_route) -> None:
+    """Contrato 1.1 §1: 202 idéntico exista o no la cuenta (sin enumeración de usuarios)."""
+    require_route("POST", "/auth/password-reset/request")
+    known = api.post("/auth/password-reset/request", json={"email": user_a.email})
+    unknown = api.post("/auth/password-reset/request", json={"email": unique_email()})
     assert known.status_code == unknown.status_code == 202
     assert known.text == unknown.text

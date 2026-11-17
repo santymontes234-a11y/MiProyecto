@@ -10,9 +10,10 @@ Create Date: 2026-11-16 16:35:32.281676+00:00
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from geoalchemy2 import Geometry
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision: str = '0005'
 down_revision: str | None = '0004'

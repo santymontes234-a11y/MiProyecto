@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push: vi.fn(), refresh: vi.fn() }) }));
 const login = vi.fn();
-vi.mock("@/lib/session", () => ({ login: (...a: unknown[]) => login(...a) }));
+vi.mock("@/lib/session", () => ({ login: (...a: unknown[]) => login(...a), getAccessToken: () => null, refreshAccessToken: async () => null, refreshSession: async () => null }));
 
 import { LoginForm } from "@/components/auth/LoginForm";
 import { ApiError } from "@ecomove/shared";

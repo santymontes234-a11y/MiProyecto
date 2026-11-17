@@ -1,0 +1,148 @@
+# Validación de la infraestructura de producción (Docker, Nginx, scripts, Android) y artefactos.
+# No despliega nada ni usa secretos: todo se ejecuta dentro del runner de GitHub.
+name: Infra
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Scripts, Compose y Nginx
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sintaxis bash
+        run: for f in infrastructure/scripts/*.sh infrastructure/postgres/init-prod/*.sh; do bash -n "$f"; done
+      - name: shellcheck
+        run: shellcheck -x -P infrastructure/scripts infrastructure/scripts/*.sh infrastructure/postgres/init-prod/*.sh
+      - name: .env.production efímero (secretos aleatorios, nunca se suben)
+        run: infrastructure/scripts/generate_secrets.sh --domain ecomove.ci.test
+      - name: docker compose config (desarrollo y producción)
+        run: |
+          docker compose -f infrastructure/docker-compose.yml --env-file .env.example config --quiet
+          docker compose -f infrastructure/docker-compose.prod.yml --env-file .env.production config --quiet
+      - name: nginx -t (Nginx 1.24 = Ubuntu 24.04) con certificado autofirmado
+        run: |
+          infrastructure/scripts/configure_nginx.sh --full --output "$RUNNER_TEMP/nginx"
+          mkdir -p "$RUNNER_TEMP/le/live/ecomove.ci.test"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=ecomove.ci.test \
+            -keyout "$RUNNER_TEMP/le/live/ecomove.ci.test/privkey.pem" -out "$RUNNER_TEMP/le/live/ecomove.ci.test/fullchain.pem"
+          printf 'events {}\nhttp {\n include /etc/nginx/mime.types;\n include /etc/nginx/conf.d/ecomove-http.conf;\n include /etc/nginx/sites-available/*.conf;\n}\n' > "$RUNNER_TEMP/nginx.conf"
+          docker run --rm \
+            -v "$RUNNER_TEMP/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$RUNNER_TEMP/nginx/conf.d/ecomove-http.conf:/etc/nginx/conf.d/ecomove-http.conf:ro" \
+            -v "$RUNNER_TEMP/nginx/snippets:/etc/nginx/snippets:ro" \
+            -v "$RUNNER_TEMP/nginx/sites-available:/etc/nginx/sites-available:ro" \
+            -v "$RUNNER_TEMP/le:/etc/letsencrypt:ro" nginx:1.24 nginx -t
+
+  prod-smoke:
+    name: Stack de producción (build + deploy + backup + restore)
+    runs-on: ubuntu-24.04
+    needs: lint
+    env:
+      DEPLOY_STATE_DIR: ${{ github.workspace }}/.deploy
+    steps:
+      - uses: actions/checkout@v4
+      - name: .env.production efímero
+        run: |
+          infrastructure/scripts/generate_secrets.sh --domain ecomove.ci.test
+          sed -i "s#^BACKUP_DIR=.*#BACKUP_DIR=$RUNNER_TEMP/backups#" .env.production
+      - name: deploy.sh (construye imágenes, migra y arranca)
+        run: infrastructure/scripts/deploy.sh
+      - name: Comprobaciones
+        run: |
+          curl -fsS http://127.0.0.1:8000/api/v1/health
+          curl -fsS -o /dev/null -w 'web %{http_code}\n' http://127.0.0.1:3000/
+          infrastructure/scripts/status.sh
+          # La API corre con un rol SIN superusuario
+          docker compose -f infrastructure/docker-compose.prod.yml --env-file .env.production exec -T db \
+            psql -U ecomove_admin -d ecomove -tAc "SELECT rolsuper FROM pg_roles WHERE rolname='ecomove_app'" | grep -qx f
+      - name: backup.sh + restore.sh
+        run: |
+          infrastructure/scripts/backup.sh --tag ci
+          b="$(ls -d "$RUNNER_TEMP"/backups/*-ci | tail -1)"
+          infrastructure/scripts/restore.sh "$b" --yes --no-safety-backup
+      - name: Logs si falla
+        if: failure()
+        run: infrastructure/scripts/logs.sh all --tail 200
+      - name: Limpieza
+        if: always()
+        run: docker compose -f infrastructure/docker-compose.prod.yml --env-file .env.production down -v
+
+  images:
+    name: Imágenes Docker (artefacto)
+    runs-on: ubuntu-24.04
+    needs: lint
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir ecomove/api y ecomove/web
+        run: |
+          tag="$(git rev-parse --short=12 HEAD)"
+          docker build -t "ecomove/api:$tag" apps/api
+          # Las URLs públicas se incrustan en la web: este artefacto usa placeholders y sirve para
+          # verificar el build. En el VPS, deploy.sh reconstruye con el dominio real.
+          docker build -f apps/web/Dockerfile -t "ecomove/web:$tag" \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.example.com/api/v1 \
+            --build-arg NEXT_PUBLIC_SITE_URL=https://example.com .
+          docker image ls ecomove/*
+          docker save "ecomove/api:$tag" | gzip > ecomove-api.tar.gz
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ecomove-api-image-${{ env.TAG }}
+          path: ecomove-api.tar.gz
+          retention-days: 7
+
+  dependencies:
+    name: Auditoría de dependencias (informativa)
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: npm audit (producción, críticas)
+        run: npm audit --omit=dev --audit-level=critical
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: pip-audit (apps/api)
+        run: |
+          pip install pip-audit
+          pip-audit --progress-spinner off apps/api
+
+  android-config:
+    name: Android (config de producción)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Config de producción válida con HTTPS
+        working-directory: apps/mobile
+        env:
+          APP_VARIANT: production
+          EXPO_PUBLIC_APP_VARIANT: production
+          EXPO_PUBLIC_API_BASE_URL: https://api.example.com/api/v1
+        run: npx expo config --type public --json | jq -e '.name == "EcoMove Querétaro" and .android.package == "mx.ecomove.queretaro"'
+      - name: Build de producción con HTTP debe fallar
+        working-directory: apps/mobile
+        env:
+          APP_VARIANT: production
+          EXPO_PUBLIC_API_BASE_URL: http://api.example.com/api/v1
+        run: "! npx expo config --type public --json"

@@ -1,0 +1,35 @@
+# EcoMove Querétaro — jails de fail2ban. Instalar en /etc/fail2ban/jail.d/ecomove.local
+# Usa los filtros que ya trae fail2ban (sshd, nginx-limit-req, nginx-botsearch, nginx-http-auth).
+
+[DEFAULT]
+# backend systemd en Ubuntu 24.04 (sshd escribe en journald)
+backend  = auto
+banaction = ufw
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+# Bloqueos progresivos para reincidentes
+bantime.increment = true
+bantime.maxtime   = 1w
+# Nunca bloquear localhost. Añade aquí la IP fija de tu oficina si la tienes.
+ignoreip = 127.0.0.1/8 ::1
+
+[sshd]
+enabled  = true
+backend  = systemd
+maxretry = 4
+
+# Clientes que superan repetidamente los límites de limit_req de Nginx (429).
+[nginx-limit-req]
+enabled  = true
+port     = http,https
+logpath  = /var/log/nginx/ecomove-*.error.log
+maxretry = 10
+findtime = 5m
+
+# Escáneres que buscan /wp-admin, /phpmyadmin, .env, etc.
+[nginx-botsearch]
+enabled  = true
+port     = http,https
+logpath  = /var/log/nginx/ecomove-*.access.log
+maxretry = 5

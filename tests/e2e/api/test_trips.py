@@ -7,6 +7,9 @@ import uuid
 import pytest
 from conftest import QRO_ROUTE, Account, Api, assert_error, assert_no_leak, trip_payload
 
+# Contrato 1.2.1: f(CAR) = f(SEDAN) = 174 g/km (EPA 2026); antes 192.
+F_SEDAN = 174.0
+
 
 @pytest.fixture(scope="module")
 def trip_of_a(api: Api, user_a: Account) -> dict:
@@ -27,11 +30,11 @@ def test_trip_contract_shape(trip_of_a: dict) -> None:
 
 
 def test_distance_and_co2_computed_server_side(trip_of_a: dict) -> None:
-    # Traza de ~0.9 km en Querétaro. BICYCLE: factor 0 → emitido 0, ahorrado = km × 192.
+    # Traza de ~0.9 km en Querétaro. BICYCLE: factor 0 → emitido 0, ahorrado = km × f(SEDAN).
     assert 500 < trip_of_a["distance_m"] < 1500
     assert trip_of_a["co2_emitted_g"] == 0
     km = trip_of_a["distance_m"] / 1000
-    assert trip_of_a["co2_saved_g"] == pytest.approx(km * 192, rel=0.05)
+    assert trip_of_a["co2_saved_g"] == pytest.approx(km * F_SEDAN, rel=0.05)
 
 
 def test_client_cannot_send_distance_or_co2(api: Api, user_a: Account) -> None:
@@ -158,7 +161,7 @@ def test_estimate(api: Api, user_a: Account) -> None:
                            json={"mode": "CAR", "route": None, "distance_m": 10_000})
     assert by_distance.status_code == 200, by_distance.text
     body = by_distance.json()
-    assert body["co2_emitted_g"] == pytest.approx(1920, rel=0.01)
+    assert body["co2_emitted_g"] == pytest.approx(10 * F_SEDAN, rel=0.01)
     assert body["co2_saved_g"] == 0
     by_route = api.post("/trips/estimate", token=user_a.access_token,
                         json={"mode": "BUS", "route": {"type": "LineString", "coordinates": QRO_ROUTE},

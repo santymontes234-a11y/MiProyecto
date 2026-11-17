@@ -10,5 +10,5 @@ export async function POST(request: Request) {
     clearSessionCookies(res);
     return res;
   }
-  return sessionResponse(await forward("/auth/refresh", { refresh_token: refreshToken }));
+  return sessionResponse(await forward("/auth/refresh", { refresh_token: refreshToken }, request));
 }

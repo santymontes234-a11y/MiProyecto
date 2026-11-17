@@ -109,7 +109,7 @@ class RankingPeriod(StrEnum):
 
 
 class TokenPurpose(StrEnum):
-    PASSWORD_RESET = "PASSWORD_RESET"
+    PASSWORD_RESET = "PASSWORD_RESET"  # noqa: S105 (propósito del token, no un secreto)
     EMAIL_VERIFICATION = "EMAIL_VERIFICATION"
 
 

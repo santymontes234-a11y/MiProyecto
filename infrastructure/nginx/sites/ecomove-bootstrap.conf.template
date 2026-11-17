@@ -1,0 +1,13 @@
+# EcoMove Querétaro — configuración TEMPORAL solo HTTP, para obtener el primer certificado.
+# Generada por configure_nginx.sh --bootstrap. Se reemplaza por ecomove.conf tras emitir el certificado.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__ www.__DOMAIN__ __API_DOMAIN__;
+
+    include snippets/ecomove-acme.conf;
+
+    location / {
+        return 503 "EcoMove: configurando HTTPS\n";
+    }
+}

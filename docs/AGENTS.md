@@ -12,6 +12,7 @@
 | **web** («web platform») | `apps/web/**` | shared, contrato |
 | **mobile** («aplicación móvil») | `apps/mobile/**` | shared, contrato |
 | **qa** («QA y seguridad») | `tests/e2e/**`, tests acordados en `apps/api/tests/`, `docs/INTEGRATION_REVIEW.md` (hallazgos) | código de producción |
+| **deploy** («deployment preparation») | `infrastructure/nginx/**`, `infrastructure/scripts/**`, archivos de producción de `infrastructure/` (p. ej. `docker-compose.prod.yml`), `.env.production.example` | `docker-compose.yml` e `infrastructure/README.md` (avisar a architect), código de apps |
 | **design** (lo cubre architect por ahora) | `packages/shared/src/design/**`, `docs/DESIGN_SYSTEM.md` | componentes de apps |
 
 Antes de crear un archivo, **comprueba si ya existe** (`ls`/`git status`). Nunca uses `cat >`/`Write`

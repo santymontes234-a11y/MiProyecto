@@ -12,8 +12,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "doctor": "expo-doctor",
-    "build:apk": "EAS_NO_VCS=1 EAS_PROJECT_ROOT=../.. npx eas-cli@latest build --platform android --profile preview",
-    "build:aab": "EAS_NO_VCS=1 EAS_PROJECT_ROOT=../.. npx eas-cli@latest build --platform android --profile production",
+    "build:apk": "EAS_NO_VCS=1 EAS_PROJECT_ROOT=../.. npx -y -p node@22.22.1 -p eas-cli@latest -c 'eas build --platform android --profile preview'",
+    "build:apk:prod-api": "EAS_NO_VCS=1 EAS_PROJECT_ROOT=../.. npx -y -p node@22.22.1 -p eas-cli@latest -c 'eas build --platform android --profile production-apk'",
+    "build:aab": "EAS_NO_VCS=1 EAS_PROJECT_ROOT=../.. npx -y -p node@22.22.1 -p eas-cli@latest -c 'eas build --platform android --profile production'",
     "postinstall": "node scripts/build-leaflet-asset.mjs"
   },
   "dependencies": {

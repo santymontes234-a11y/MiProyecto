@@ -50,8 +50,9 @@ def _recreate_database() -> None:
 
 @pytest.fixture(scope="session", autouse=True)
 def _database() -> Iterator[None]:
-    from alembic import command
     from alembic.config import Config
+
+    from alembic import command
 
     _recreate_database()
     cfg = Config(str(API_DIR / "alembic.ini"))
