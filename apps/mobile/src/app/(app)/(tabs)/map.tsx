@@ -135,7 +135,19 @@ export default function MapScreen() {
             <AppText variant="caption" tone="muted" style={{ marginTop: spacing.md }}>
               {formatCoord(selected.geometry.coordinates)}
             </AppText>
-            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl }}>
+            <Button
+              label="Reportar un problema aquí"
+              icon="megaphone-outline"
+              variant="ghost"
+              size="md"
+              style={{ marginTop: spacing.md }}
+              onPress={() => {
+                const [lng, lat] = selected.geometry.coordinates;
+                setSelected(null);
+                router.push({ pathname: '/report', params: { lng: String(lng), lat: String(lat), poi_id: selected.id, poi_name: selected.properties.name } });
+              }}
+            />
+            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
               <Button label="Salir de aquí" variant="secondary" fullWidth={false} style={{ flex: 1 }} onPress={() => goFrom(selected.geometry.coordinates, selected.properties.name)} />
               <Button label="Ir aquí" fullWidth={false} style={{ flex: 1 }} onPress={() => goTo(selected.geometry.coordinates, selected.properties.name)} />
             </View>
@@ -169,11 +181,24 @@ function Hint({ text, danger = false }: { text: string; danger?: boolean }) {
   );
 }
 
-const ATTRIBUTE_LABELS: Record<string, string> = { capacity: 'Capacidad', covered: 'Techado', operator: 'Operador', opening_hours: 'Horario' };
+// Contrato 1.1.1 §5.1: `code` = código oficial (solo si un admin lo asigna); `ref` = referencia OSM (no única).
+const ATTRIBUTE_LABELS: Record<string, string> = {
+  code: 'Código oficial',
+  ref: 'Referencia',
+  lines: 'Líneas',
+  capacity: 'Capacidad',
+  covered: 'Techado',
+  operator: 'Operador',
+  opening_hours: 'Horario',
+};
+const HIDDEN_ATTRIBUTES = new Set(['source', 'osm_id']);
 
 function PoiAttributes({ attributes }: { attributes: Record<string, unknown> }) {
   const { spacing } = useTheme();
-  const entries = Object.entries(attributes).filter(([, v]) => ['string', 'number', 'boolean'].includes(typeof v));
+  const entries = Object.entries(attributes)
+    .filter(([k]) => !HIDDEN_ATTRIBUTES.has(k))
+    .map(([k, v]): [string, unknown] => [k, Array.isArray(v) ? v.filter((x) => typeof x === 'string').join(', ') : v])
+    .filter(([, v]) => ['string', 'number', 'boolean'].includes(typeof v) && v !== '');
   if (!entries.length) return null;
   return (
     <View style={{ marginTop: spacing.md, gap: spacing.xs }}>

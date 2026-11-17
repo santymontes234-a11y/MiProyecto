@@ -15,7 +15,9 @@ class EmissionFactor(Base):
     __table_args__ = (CheckConstraint("grams_per_km >= 0", name="ck_emission_factors_positive"),)
 
     mode: Mapped[TransportMode] = mapped_column(
-        pg_enum(TransportMode, "transport_mode"), primary_key=True
+        pg_enum(TransportMode, "transport_mode"),
+        ForeignKey("transport_modes.mode", ondelete="RESTRICT", onupdate="CASCADE"),
+        primary_key=True,
     )
     grams_per_km: Mapped[float] = mapped_column(Float, nullable=False)
     valid_from: Mapped[datetime] = mapped_column(

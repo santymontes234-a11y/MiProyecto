@@ -12,7 +12,21 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import SecurityMiddleware
 from app.db.session import SessionLocal
-from app.routers import admin, auth, health, map, stats, trips, users
+from app.routers import (
+    admin,
+    auth,
+    citizen_reports,
+    gamification,
+    geo_analytics,
+    geocode,
+    health,
+    map,
+    routes,
+    stats,
+    trips,
+    users,
+    zones,
+)
 from app.services.users import bootstrap_super_admin
 
 logger = logging.getLogger("ecomove")
@@ -56,7 +70,8 @@ def create_app() -> FastAPI:
         max_age=600,
     )
 
-    for r in (health, auth, users, trips, map, stats, admin):
+    for r in (health, auth, users, trips, map, stats, admin, geo_analytics, routes, gamification,
+              citizen_reports, geocode, zones):
         app.include_router(r.router, prefix=s.api_prefix)
     return app
 

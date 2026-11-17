@@ -34,6 +34,8 @@ const MESSAGES: Record<string, string> = {
   ROUTING_UNAVAILABLE: 'El cálculo de rutas no está disponible por ahora.',
   PAYLOAD_TOO_LARGE: 'El viaje es demasiado grande para enviarse.',
   NOTIFICATION_NOT_FOUND: 'La notificación ya no existe.',
+  // 1.2.0
+  GEOCODING_UNAVAILABLE: 'La búsqueda de lugares no está disponible por ahora. Toca el mapa para elegir el punto.',
 };
 
 export function errorCode(e: unknown): string | null {

@@ -9,13 +9,17 @@ Variables de entorno:
   E2E_SUPERADMIN_PASSWORD  (las mismas que BOOTSTRAP_SUPER_ADMIN_* del .env de desarrollo)
   E2E_RUN_RATE_LIMIT=1     Activa las pruebas que agotan el rate limit (bloquean la IP ~1 min)
   E2E_REQUIRE_API=1        Falla (en vez de omitir) si la API no responde — usar en CI
+  E2E_STRICT_CONTRACT=1    Falla (en vez de omitir) si una ruta del contrato no está implementada
+  E2E_MAILPIT_URL          API HTTP de un buzón Mailpit que recibe el SMTP de la API (reset/verificación)
 
 Nunca usar datos reales: todos los usuarios se generan como qa-<aleatorio>@example.com.
 """
 
 from __future__ import annotations
 
+import itertools
 import os
+import re
 import time
 import uuid
 from collections.abc import Callable, Iterator
@@ -89,6 +93,70 @@ def api() -> Iterator[Api]:
         if health.status_code != 200:
             pytest.fail(f"/health respondió {health.status_code}: {health.text[:300]}")
         yield Api(client)
+
+
+@pytest.fixture(scope="session")
+def implemented_routes(api: Api) -> set[tuple[str, str]]:
+    spec = api.raw.get("/openapi.json")
+    if spec.status_code != 200:
+        return set()
+    prefix = "/api/v1"
+    return {(m.upper(), path.removeprefix(prefix)) for path, ops in spec.json()["paths"].items() for m in ops}
+
+
+@pytest.fixture(scope="session")
+def require_route(implemented_routes: set[tuple[str, str]]) -> Callable[[str, str], None]:
+    """Omite (o falla con E2E_STRICT_CONTRACT=1) si la ruta del contrato aún no existe en la API."""
+
+    def _req(method: str, path: str) -> None:
+        if (method.upper(), path) in implemented_routes:
+            return
+        msg = f"{method} {path} (contrato 1.1.0) no está implementada en la API"
+        if os.environ.get("E2E_STRICT_CONTRACT") == "1":
+            pytest.fail(msg)
+        pytest.skip(msg)
+
+    return _req
+
+
+# ---------------------------------------------------------------------------
+# Buzón de correo (Mailpit) para enlaces de reset y verificación
+# ---------------------------------------------------------------------------
+
+TOKEN_RE = re.compile(r"token=([A-Za-z0-9_\-\.~%]+)")
+
+
+class Mailbox:
+    def __init__(self, base: str) -> None:
+        self.http = httpx.Client(base_url=base.rstrip("/"), timeout=10.0)
+
+    def tokens_for(self, email: str, *, wait_s: float = 10.0, at_least: int = 1) -> list[str]:
+        """Tokens de los enlaces enviados a `email`, del más reciente al más antiguo."""
+        deadline = time.monotonic() + wait_s
+        while True:
+            found: list[str] = []
+            res = self.http.get("/api/v1/search", params={"query": f"to:{email}"})
+            res.raise_for_status()
+            for msg in res.json().get("messages", []):
+                body = self.http.get(f"/api/v1/message/{msg['ID']}").json()
+                text = (body.get("Text") or "") + (body.get("HTML") or "")
+                found.extend(m for m in TOKEN_RE.findall(text) if m not in found)
+            if len(found) >= at_least or time.monotonic() > deadline:
+                return found
+            time.sleep(0.5)
+
+    def count_for(self, email: str) -> int:
+        res = self.http.get("/api/v1/search", params={"query": f"to:{email}"})
+        res.raise_for_status()
+        return int(res.json().get("messages_count", 0))
+
+
+@pytest.fixture(scope="session")
+def mailbox() -> Mailbox:
+    url = os.environ.get("E2E_MAILPIT_URL")
+    if not url:
+        pytest.skip("Define E2E_MAILPIT_URL (tests/e2e/run-local.sh levanta Mailpit)")
+    return Mailbox(url)
 
 
 # ---------------------------------------------------------------------------
@@ -175,13 +243,21 @@ QRO_ROUTE = [[-100.3899, 20.5888], [-100.3870, 20.5902], [-100.3842, 20.5921], [
 QRO_BBOX = "-100.45,20.55,-100.35,20.65"
 
 
+_TRIP_SLOT = itertools.count(1)
+
+
+def iso(dt: datetime) -> str:
+    return dt.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
 def trip_payload(**overrides: Any) -> dict[str, Any]:
-    start = datetime.now(UTC).replace(microsecond=0) - timedelta(hours=2)
+    """Cada llamada usa una franja de 1 h distinta (hacia el pasado) para no solaparse entre tests."""
+    start = datetime.now(UTC).replace(minute=0, second=0, microsecond=0) - timedelta(hours=next(_TRIP_SLOT) + 1)
     data: dict[str, Any] = {
         "client_trip_id": str(uuid.uuid4()),
         "mode": "BICYCLE",
-        "started_at": start.isoformat().replace("+00:00", "Z"),
-        "ended_at": (start + timedelta(minutes=20)).isoformat().replace("+00:00", "Z"),
+        "started_at": iso(start),
+        "ended_at": iso(start + timedelta(minutes=20)),
         "route": {"type": "LineString", "coordinates": QRO_ROUTE},
     }
     data.update(overrides)

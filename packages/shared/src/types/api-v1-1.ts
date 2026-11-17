@@ -16,6 +16,7 @@ import type {
   TransportMode,
   TripSource,
   TripStatus,
+  VehicleType,
   ZoneKind,
 } from './enums';
 import type {
@@ -74,6 +75,8 @@ export interface Preferences {
   default_mode: TransportMode | null;
   weekly_goal_trips: number | null;
   email_notifications: boolean;
+  /** 1.2 */
+  default_vehicle_type: VehicleType | null;
 }
 
 export interface AccountDeleteRequest {
@@ -96,6 +99,10 @@ export interface TripEstimateBatchRequest {
   modes: TransportMode[];
   route?: LineStringGeometry | null;
   distance_m?: number | null;
+  /** 1.2 — solo CAR y CARPOOL (§4.3) */
+  vehicle_type?: VehicleType | null;
+  /** 1.2 — 1..8, solo CAR y CARPOOL (§4.3) */
+  occupants?: number | null;
 }
 
 export interface TripEstimateBatchResponse {
@@ -110,6 +117,10 @@ export interface TripUpdate {
   route?: LineStringGeometry;
   source?: TripSource;
   route_token?: string;
+  /** 1.2 — solo CAR y CARPOOL (§4.3) */
+  vehicle_type?: VehicleType | null;
+  /** 1.2 — 1..8, solo CAR y CARPOOL (§4.3) */
+  occupants?: number | null;
 }
 
 export interface RecurringTripCreate {
@@ -175,6 +186,33 @@ export interface TransportModeInfo {
   mode: TransportMode;
   max_speed_kmh: number;
   is_active: boolean;
+}
+
+/** 1.2 — §8, sin factor de emisión (ADR-002) */
+export interface VehicleTypeInfo {
+  code: VehicleType;
+  max_occupants: number;
+  is_active: boolean;
+}
+
+/** 1.2 — §12.1 */
+export interface GeocodeQuery {
+  q: string;
+  limit?: number;
+  near?: Position;
+}
+
+export interface Place {
+  name: string;
+  label: string;
+  position: Position;
+  category: string | null;
+  /** 1.2.1: 'zone' = municipio o zona */
+  source: 'zone' | 'poi' | 'osm';
+}
+
+export interface GeocodeResponse {
+  items: Place[];
 }
 
 export interface TransportModeUpdate {

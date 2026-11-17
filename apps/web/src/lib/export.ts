@@ -20,7 +20,12 @@ export function toCsv(headers: string[], rows: Cell[][]): string {
 }
 
 export function downloadText(content: string, filename: string, type = "text/csv;charset=utf-8"): void {
-  const url = URL.createObjectURL(new Blob([content], { type }));
+  downloadBlob(new Blob([content], { type }), filename);
+}
+
+/** Descarga un Blob ya obtenido de la API (exportación de datos, informes CSV/PDF). */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;

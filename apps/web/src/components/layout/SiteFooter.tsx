@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BRAND } from "@ecomove/shared";
 import { LogoMark } from "./Logo";
 
 export function SiteFooter() {
@@ -7,8 +8,9 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2 font-semibold text-on-brand">
-            <LogoMark /> EcoMove Querétaro
+            <LogoMark /> {BRAND.name}
           </div>
+          <p className="mt-3 text-lg font-bold text-on-brand">{BRAND.slogan}</p>
           <p className="mt-3 max-w-md text-sm text-brand-soft/80">
             Plataforma ciudadana para medir, visualizar y premiar la movilidad sostenible en la zona metropolitana de Querétaro.
           </p>
@@ -29,7 +31,7 @@ export function SiteFooter() {
           </ul>
         </nav>
       </div>
-      <p className="border-t border-on-brand/10 py-4 text-center text-xs text-brand-soft/70">© {new Date().getFullYear()} EcoMove Querétaro</p>
+      <p className="border-t border-on-brand/10 py-4 text-center text-xs text-brand-soft/70">© {new Date().getFullYear()} {BRAND.name} · {BRAND.slogan}</p>
     </footer>
   );
 }

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TripCard } from '@/components/trips/TripComponents';
 import { AppText, Button, Card, EmptyState, ErrorState, FadeIn, IconBubble, Screen, SectionHeader, Skeleton, SkeletonList, StatTile } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { useUnreadCount } from '@/features/gamification/useGamification';
 import { useStatsMe } from '@/features/stats/useStats';
 import { useRecentTrips } from '@/features/trips/useTrips';
 import { getErrorMessage } from '@/lib/errors';
@@ -20,6 +21,7 @@ export default function DashboardScreen() {
   const week = useStatsMe('week');
   const all = useStatsMe('all');
   const recent = useRecentTrips(3);
+  const unread = useUnreadCount();
   const refreshing = week.isRefetching || all.isRefetching || recent.isRefetching;
   const firstName = user?.full_name.split(' ')[0] ?? '';
 
@@ -27,6 +29,7 @@ export default function DashboardScreen() {
     void week.refetch();
     void all.refetch();
     void recent.refetch();
+    void unread.refetch();
   };
 
   return (
@@ -37,8 +40,20 @@ export default function DashboardScreen() {
             <AppText tone="muted">{greeting()},</AppText>
             <AppText variant="title">{firstName} 👋</AppText>
           </View>
-          <Pressable onPress={() => router.push('/notifications')} accessibilityRole="button" accessibilityLabel="Notificaciones" hitSlop={8}>
+          <Pressable
+            onPress={() => router.push('/notifications')}
+            accessibilityRole="button"
+            accessibilityLabel={unread.data ? `Notificaciones, ${unread.data} sin leer` : 'Notificaciones'}
+            hitSlop={8}
+          >
             <IconBubble icon="notifications-outline" />
+            {unread.data ? (
+              <View style={{ position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 4, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' }}>
+                <AppText variant="overline" style={{ color: colors.onPrimary, letterSpacing: 0 }}>
+                  {unread.data > 99 ? '99+' : unread.data}
+                </AppText>
+              </View>
+            ) : null}
           </Pressable>
         </View>
 

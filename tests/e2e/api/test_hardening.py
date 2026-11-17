@@ -6,7 +6,6 @@ import os
 import uuid
 
 import pytest
-
 from conftest import Api, assert_error, assert_no_leak, unique_email
 
 

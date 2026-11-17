@@ -51,7 +51,8 @@ export default async function HomePage() {
               <Bike className="size-4" aria-hidden="true" /> Movilidad sostenible en Querétaro
             </p>
             <h1 className="mt-5 text-4xl font-bold tracking-tight text-ink sm:text-5xl">
-              Muévete limpio y <span className="text-brand-strong">mide el CO₂</span> que dejas de emitir
+              <span className="block text-brand-strong">{siteConfig.slogan}</span>
+              <span className="mt-2 block text-3xl sm:text-4xl">Muévete limpio y mide el CO₂ que dejas de emitir</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-ink-muted">
               EcoMove Querétaro registra tus trayectos a pie, en bicicleta o en transporte público, calcula tus emisiones evitadas y muestra a la ciudad dónde crece la movilidad sostenible.

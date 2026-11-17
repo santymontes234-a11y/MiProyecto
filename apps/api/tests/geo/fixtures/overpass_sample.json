@@ -25,7 +25,9 @@
        "tags": {"amenity": "charging_station", "capacity": "n/a"}},
       {"type": "node", "id": 800005, "lat": 20.594, "lon": -100.394,
        "tags": {"amenity": "bicycle_repair_station"}},
-      {"type": "node", "id": 800006, "lat": 20.595, "lon": -100.395, "tags": {"amenity": "bench"}}
+      {"type": "node", "id": 800006, "lat": 20.595, "lon": -100.395, "tags": {"amenity": "bench"}},
+      {"type": "node", "id": 800007, "lat": 20.596, "lon": -100.396,
+       "tags": {"highway": "bus_stop", "name": "Prueba Parada 2", "ref": "P-17"}}
     ]
   }
 }

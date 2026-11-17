@@ -239,8 +239,10 @@ def parse_pois(data: dict[str, Any]) -> list[PoiRow]:
         if (cap := _int_or_none(tags.get("capacity"))) is not None:
             attrs["capacity"] = cap
         if cat == "BUS_STOP":
-            if code := tags.get("ref") or tags.get("local_ref"):
-                attrs["code"] = code
+            # Contrato 1.1.1 §5.1: el ref de OSM NO es el código oficial (lo asigna un admin
+            # en `code`) y puede repetirse; se guarda solo como referencia en `ref`.
+            if ref := tags.get("ref") or tags.get("local_ref"):
+                attrs["ref"] = ref
             if lines := tags.get("route_ref"):
                 attrs["lines"] = [
                     x.strip() for x in lines.replace(",", ";").split(";") if x.strip()
@@ -326,6 +328,17 @@ def upsert_pois(db: Session, rows: list[PoiRow], bbox: BBox, prune: bool) -> dic
                                     PRIMARY KEY (osm_type, osm_id)) ON COMMIT DROP
     """)
     )
+    # Migración 0006: code/lines/ref/capacity viven en transit_stops / bike_stations.
+    # En pois.attributes solo quedan las claves libres (procedencia OSM, operador, etc.).
+    from app.models import PoiCategory
+    from app.services import poi_specialization
+
+    specs = {}
+    free_attrs = {}
+    for r in rows:
+        free, spec = poi_specialization.split(PoiCategory(r.category), dict(r.attributes))
+        free_attrs[(r.osm_type, r.osm_id)] = free
+        specs[(r.osm_type, r.osm_id)] = (PoiCategory(r.category), spec)
     if rows:
         db.execute(
             text(
@@ -333,7 +346,12 @@ def upsert_pois(db: Session, rows: list[PoiRow], bbox: BBox, prune: bool) -> dic
                 ":lon, :lat, CAST(:attributes AS jsonb))"
             ),
             [
-                {**r.__dict__, "attributes": json.dumps(r.attributes, ensure_ascii=False)}
+                {
+                    **r.__dict__,
+                    "attributes": json.dumps(
+                        free_attrs[(r.osm_type, r.osm_id)], ensure_ascii=False
+                    ),
+                }
                 for r in rows
             ],
         )
@@ -374,6 +392,18 @@ def upsert_pois(db: Session, rows: list[PoiRow], bbox: BBox, prune: bool) -> dic
               AND NOT EXISTS (SELECT 1 FROM osm_pois o WHERE {match})
         """)  # noqa: S608
         ).rowcount
+    # Subtipos (paradas y estaciones): un sync por POI importado.
+    ids = db.execute(
+        text("""
+        SELECT o.osm_type, o.osm_id, p.id FROM osm_pois o
+        JOIN pois p ON p.attributes->>'source' = 'osm'
+                   AND p.attributes->>'osm_type' = o.osm_type
+                   AND p.attributes->>'osm_id' = o.osm_id::text
+    """)
+    ).all()
+    for osm_type, osm_id, poi_id in ids:
+        category, spec = specs[(osm_type, osm_id)]
+        poi_specialization.sync(db, poi_id, category, spec)
     by_cat: dict[str, int] = {}
     for r in rows:
         by_cat[r.category] = by_cat.get(r.category, 0) + 1

@@ -1,4 +1,4 @@
-import { formatCo2, formatDistance, formatDuration } from '@ecomove/shared';
+import { formatCo2, formatDistance, formatDuration, VEHICLE_TYPE_LABELS } from '@ecomove/shared';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
@@ -8,7 +8,8 @@ import type { MapLine, MapMarker } from '@/components/map/map-protocol';
 import { Co2Comparison, ModeBadge } from '@/components/trips/TripComponents';
 import { AppText, Button, Card, ConfirmDialog, ErrorState, ListRow, Screen, Skeleton, useToast } from '@/components/ui';
 import { modeMeta } from '@/features/trips/modes';
-import { useDeleteTrip, useTrip } from '@/features/trips/useTrips';
+import { useDeleteTrip, useTrip, useUpdateTrip } from '@/features/trips/useTrips';
+import { EditTripSheet } from '@/components/trips/EditTripSheet';
 import { getErrorMessage } from '@/lib/errors';
 import { formatDate, formatTime } from '@/lib/format';
 import { simplify } from '@/lib/geo';
@@ -22,6 +23,8 @@ export default function TripDetailScreen() {
   const q = useTrip(id);
   const del = useDeleteTrip();
   const [confirm, setConfirm] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const update = useUpdateTrip(id ?? '');
 
   const coords = useMemo(() => {
     const c = q.data?.route.coordinates ?? [];
@@ -100,7 +103,22 @@ export default function TripDetailScreen() {
       <Card style={{ marginTop: spacing.lg }}>
         <ListRow icon="navigate" iconColor={colors.accent} title={formatDistance(trip.distance_m)} subtitle="Distancia (calculada por el servidor)" />
         <ListRow icon="time" iconColor={colors.info} title={formatDuration(trip.duration_s)} subtitle="Duración" />
-        <ListRow icon="leaf" title={formatCo2(trip.co2_saved_g)} subtitle="CO₂ evitado" />
+        <ListRow icon="leaf" title={formatCo2(trip.co2_saved_g)} subtitle={trip.occupants ? 'CO₂ ahorrado frente a ir solo' : 'CO₂ evitado'} />
+        {trip.occupants ? (
+          <ListRow
+            icon="car"
+            iconColor={colors.info}
+            title={`${trip.vehicle_type ? VEHICLE_TYPE_LABELS[trip.vehicle_type] : 'Automóvil'} · ${trip.occupants} ${trip.occupants === 1 ? 'persona' : 'personas'}`}
+            subtitle="Vehículo y ocupantes"
+          />
+        ) : null}
+        <ListRow icon="star" iconColor={colors.warning} title={`${trip.points} puntos`} subtitle="Obtenidos con este viaje" />
+        <ListRow
+          icon={trip.source === 'GPS' ? 'navigate-circle' : 'map'}
+          iconColor={colors.info}
+          title={trip.source === 'GPS' ? 'Grabado con GPS' : 'Ruta planificada'}
+          subtitle="Origen del registro"
+        />
       </Card>
 
       <Card style={{ marginTop: spacing.lg }}>
@@ -110,7 +128,29 @@ export default function TripDetailScreen() {
         </AppText>
       </Card>
 
-      <Button label="Eliminar viaje" icon="trash-outline" variant="ghost" style={{ marginTop: spacing.xl }} onPress={() => setConfirm(true)} />
+      <Button label="Editar viaje" icon="create-outline" variant="secondary" style={{ marginTop: spacing.xl }} onPress={() => setEditing(true)} />
+      <Button label="Eliminar viaje" icon="trash-outline" variant="ghost" style={{ marginTop: spacing.sm }} onPress={() => setConfirm(true)} />
+
+      {editing ? (
+        <EditTripSheet
+          trip={trip}
+          visible
+          saving={update.isPending}
+          error={update.isError ? getErrorMessage(update.error) : null}
+          onClose={() => {
+            setEditing(false);
+            update.reset();
+          }}
+          onSave={(changes) =>
+            update.mutate(changes, {
+              onSuccess: () => {
+                setEditing(false);
+                toast.success('Viaje actualizado.');
+              },
+            })
+          }
+        />
+      ) : null}
 
       <ConfirmDialog
         visible={confirm}

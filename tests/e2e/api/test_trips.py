@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 
 import pytest
-
 from conftest import QRO_ROUTE, Account, Api, assert_error, assert_no_leak, trip_payload
 
 

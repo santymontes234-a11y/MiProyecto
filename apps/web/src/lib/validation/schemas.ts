@@ -59,8 +59,20 @@ export const poiFormSchema = z.object({
   lat: z.coerce.number<number>().min(-90).max(90, "Latitud inválida"),
   lng: z.coerce.number<number>().min(-180).max(180, "Longitud inválida"),
   capacity: z.union([z.literal(""), z.coerce.number<number>().int().min(0).max(10_000)]).optional(),
+  /** §5.1: código oficial asignado por un administrador; único entre paradas (409 CONFLICT). */
+  code: z.union([z.literal(""), z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{2,32}$/, "2 a 32 caracteres: A-Z, 0-9, _ o -")]).optional(),
+  /** §5.1: líneas separadas por comas, ≤ 50 de ≤ 32 caracteres. */
+  lines: z
+    .string()
+    .optional()
+    .refine((v) => !v || splitLines(v).length <= 50, "Máximo 50 líneas")
+    .refine((v) => !v || splitLines(v).every((l) => l.length <= 32), "Cada línea admite hasta 32 caracteres"),
   is_active: z.boolean(),
 });
+
+export function splitLines(v: string): string[] {
+  return v.split(",").map((l) => l.trim()).filter(Boolean);
+}
 export type PoiFormInput = z.infer<typeof poiFormSchema>;
 
 export const emissionFactorSchema = z.object({
@@ -69,3 +81,39 @@ export const emissionFactorSchema = z.object({
 export type EmissionFactorInput = z.infer<typeof emissionFactorSchema>;
 
 export const roleSchema = z.enum(ROLES);
+
+export const emailRequestSchema = z.object({ email });
+export type EmailRequestInput = z.infer<typeof emailRequestSchema>;
+
+export const resetPasswordSchema = z
+  .object({ new_password: passwordPolicy, confirm_password: z.string() })
+  .refine((d) => d.new_password === d.confirm_password, { path: ["confirm_password"], message: "Las contraseñas no coinciden" });
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+/** Token de un solo uso de los enlaces de correo (≥ 256 bits, URL-safe). Solo formato. */
+export const oneTimeTokenSchema = z.string().min(16).max(512).regex(/^[A-Za-z0-9_\-.~]+$/);
+
+export const citizenReportSchema = z.object({
+  category: z.enum(["BIKE_LANE_DAMAGE", "MISSING_INFRASTRUCTURE", "SAFETY", "POI_ISSUE", "OTHER"]),
+  title: z.string().trim().min(3, "Mínimo 3 caracteres").max(120),
+  description: z.string().trim().max(2000, "Máximo 2000 caracteres"),
+});
+export type CitizenReportInput = z.infer<typeof citizenReportSchema>;
+
+export const reasonSchema = z.object({ reason: z.string().trim().min(5, "Explica el motivo (mínimo 5 caracteres)").max(500) });
+export type ReasonInput = z.infer<typeof reasonSchema>;
+
+export const preferencesSchema = z.object({
+  language: z.enum(["es", "en"]),
+  default_mode: z.string(),
+  default_vehicle_type: z.string(),
+  weekly_goal_trips: z.union([z.literal(""), z.coerce.number<number>().int().min(1, "Mínimo 1").max(100, "Máximo 100")]),
+  email_notifications: z.boolean(),
+});
+export type PreferencesInput = z.infer<typeof preferencesSchema>;
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, "Ingresa tu contraseña"),
+  confirm: z.literal("ELIMINAR", { error: "Escribe ELIMINAR para confirmar" }),
+});
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

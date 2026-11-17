@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Boolean, DateTime, Index, String, Text, func, text
+from sqlalchemy import Boolean, DateTime, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -17,6 +17,8 @@ class Poi(Base):
     __table_args__ = (
         Index("ix_pois_location", "location", postgresql_using="gist"),
         Index("ix_pois_category", "category"),
+        # Superclave para la especialización disjunta (transit_stops, bike_stations).
+        UniqueConstraint("id", "category", name="uq_pois_id_category"),
         # Unicidad de POIs importados de OpenStreetMap (importador del módulo geo, upsert).
         Index(
             "ux_pois_osm_ref",

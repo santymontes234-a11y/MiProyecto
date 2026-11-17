@@ -1,0 +1,18 @@
+# Contexto de build de apps/web/Dockerfile (se construye desde la raíz del monorepo).
+# Lista blanca: solo lo necesario para instalar dependencias y compilar la web.
+*
+!package.json
+!package-lock.json
+!tsconfig.base.json
+!packages/shared/**
+!apps/web/**
+!apps/mobile/package.json
+apps/web/node_modules
+apps/web/.next
+apps/web/tests
+apps/web/mock
+apps/web/*.tsbuildinfo
+apps/web/.env*
+packages/shared/node_modules
+**/.env
+**/.env.*

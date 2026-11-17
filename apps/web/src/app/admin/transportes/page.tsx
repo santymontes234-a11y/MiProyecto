@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/ui/Fields";
 import { Alert } from "@/components/ui/StateViews";
+import { TransportModesCard } from "@/components/admin/TransportModesCard";
 
 export default function TransportModesPage() {
   const { user } = useSession();
@@ -48,9 +49,11 @@ export default function TransportModesPage() {
           />
         }
       />
-      {!canEdit && <div className="mb-4"><Alert tone="info">Solo un superadministrador puede modificar los factores de emisión.</Alert></div>}
+      {!canEdit && <div className="mb-4"><Alert tone="info">Solo un superadministrador puede modificar medios y factores de emisión.</Alert></div>}
       {flash && <div className="mb-4"><Alert tone="success">{flash}</Alert></div>}
+      <div className="mb-6"><TransportModesCard canEdit={canEdit} /></div>
       <Card>
+        <h2 className="mb-4 text-base font-semibold">Factores de emisión</h2>
         <DataTable caption="Factores de emisión" columns={columns} rows={factors.data} rowKey={(f) => f.mode} loading={factors.loading} error={factors.error ? errorMessage(factors.error) : null} onRetry={factors.refetch} emptyTitle="No hay factores configurados" />
       </Card>
       {editing && (

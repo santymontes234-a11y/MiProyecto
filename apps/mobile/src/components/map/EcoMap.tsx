@@ -96,8 +96,9 @@ export const EcoMap = forwardRef<EcoMapHandle, EcoMapProps>(function EcoMap(
       type: 'init',
       center: initial.current.center,
       zoom: initial.current.zoom,
-      tileUrl: config.osmTileUrl,
-      attribution: config.osmAttribution,
+      tileUrl: config.tileUrl,
+      tileUrlDark: config.tileUrlDark,
+      attribution: config.tileAttribution,
       theme: mapTheme,
     });
     // mapTheme se aplica en su propio efecto; init solo depende de ready.

@@ -2,12 +2,13 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Bike, Leaf, MapPinned, Timer } from "lucide-react";
+import { Bike, Leaf, MapPinned, Star } from "lucide-react";
 import { formatCo2, formatDistance, formatDuration } from "@ecomove/shared";
 import { api } from "@/lib/api";
 import { daysAgoIso, formatNumber } from "@/lib/format";
 import { errorMessage, useApiQuery } from "@/hooks/useApiQuery";
 import { useSession } from "@/components/auth/SessionProvider";
+import { EmailVerificationBanner } from "@/components/settings/EmailVerificationBanner";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -23,6 +24,7 @@ export default function UserDashboardPage() {
   const last30 = useMemo(() => ({ from: daysAgoIso(30), to: new Date().toISOString() }), []);
   const total = useApiQuery("me|all", () => api.stats.me());
   const month = useApiQuery("me|30d", () => api.stats.me(last30));
+  const game = useApiQuery("gamification-me", () => api.gamification.me());
   const recent = useApiQuery("trips|recent", () => api.trips.list({ page: 1, page_size: 5 }));
   const firstName = user.full_name.split(" ")[0] ?? user.full_name;
   const t = total.data;
@@ -36,6 +38,7 @@ export default function UserDashboardPage() {
           forbidden: { tone: "warning", text: "No tienes permisos para acceder a esa sección." },
         }}
       />
+      <EmailVerificationBanner />
       <PageHeader title={`Hola, ${firstName}`} description="Tu impacto en la movilidad sostenible de Querétaro." />
       {total.error && <div className="mb-6"><ErrorState message={errorMessage(total.error)} onRetry={total.refetch} /></div>}
 
@@ -43,7 +46,7 @@ export default function UserDashboardPage() {
         <StatTile label="CO₂ evitado total" value={v(() => formatCo2(t!.co2_saved_g))} hint={month.data ? `${formatCo2(month.data.co2_saved_g)} en los últimos 30 días` : undefined} icon={<Leaf className="size-5" />} />
         <StatTile label="Viajes" value={v(() => formatNumber(t!.trips_count))} hint={month.data ? `${formatNumber(month.data.trips_count)} en 30 días` : undefined} icon={<Bike className="size-5" />} accent="blue" />
         <StatTile label="Distancia" value={v(() => formatDistance(t!.distance_m))} icon={<MapPinned className="size-5" />} accent="teal" />
-        <StatTile label="Tiempo en movimiento" value={v(() => formatDuration(t!.duration_s))} icon={<Timer className="size-5" />} accent="yellow" />
+        <StatTile label="Puntos" value={game.data ? formatNumber(game.data.points_total) : "—"} hint={game.data ? `Nivel ${game.data.level} · ${formatDuration(t?.duration_s ?? 0)} en movimiento` : undefined} icon={<Star className="size-5" />} accent="yellow" />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[2fr_1fr]">

@@ -1,0 +1,543 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2090" height="836" viewBox="0 0 2090 836" font-family="Arial, Helvetica, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="20" y="32" font-size="20" font-weight="bold" fill="#1b4332">EcoMove Querétaro — Modelo relacional (MER)</text>
+<text x="20" y="50" font-size="11" fill="#555">PostgreSQL 16 + PostGIS · 25 tablas · PK = clave primaria, FK = clave foránea, UQ = única · pata de gallo = lado «muchos»</text>
+<path d="M615,528.5 h18 V90.5 H615" fill="none" stroke="#2d6a4f" stroke-width="1.3" opacity="0.85"/>
+<path d="M615,523.5 L624,528.5 L615,533.5 M615,528.5 H624" stroke="#2d6a4f" fill="none" stroke-width="1.3"/>
+<path d="M620,85.5 v10 M624,85.5 v10" stroke="#2d6a4f" stroke-width="1.3"/>
+<path d="M1650,612.5 h25 V309.5 H1650" fill="none" stroke="#1d4e89" stroke-width="1.3" opacity="0.85"/>
+<path d="M1650,607.5 L1659,612.5 L1650,617.5 M1650,612.5 H1659" stroke="#1d4e89" fill="none" stroke-width="1.3"/>
+<path d="M1655,304.5 v10 M1659,304.5 v10" stroke="#1d4e89" stroke-width="1.3"/>
+<path d="M1650,627.5 h32 V309.5 H1650" fill="none" stroke="#9c4221" stroke-width="1.3" opacity="0.85"/>
+<path d="M1650,622.5 L1659,627.5 L1650,632.5 M1650,627.5 H1659" stroke="#9c4221" fill="none" stroke-width="1.3"/>
+<path d="M1655,304.5 v10 M1659,304.5 v10" stroke="#9c4221" stroke-width="1.3"/>
+<path d="M1400,105.5 H1007.5 V90.5 H615" fill="none" stroke="#6b46c1" stroke-width="1.3" opacity="0.85"/>
+<path d="M1400,100.5 L1391,105.5 L1400,110.5 M1400,105.5 H1391" stroke="#6b46c1" fill="none" stroke-width="1.3"/>
+<path d="M610,85.5 v10 M606,85.5 v10" stroke="#6b46c1" stroke-width="1.3"/>
+<path d="M1650,195.5 h46 V309.5 H1650" fill="none" stroke="#975a16" stroke-width="1.3" opacity="0.85"/>
+<path d="M1650,190.5 L1659,195.5 L1650,200.5 M1650,195.5 H1659" stroke="#975a16" fill="none" stroke-width="1.3"/>
+<path d="M1655,304.5 v10 M1659,304.5 v10" stroke="#975a16" stroke-width="1.3"/>
+<path d="M1305,189.5 h18 V90.5 H1305" fill="none" stroke="#2c7a7b" stroke-width="1.3" opacity="0.85"/>
+<path d="M1305,184.5 L1314,189.5 L1305,194.5 M1305,189.5 H1314" stroke="#2c7a7b" fill="none" stroke-width="1.3"/>
+<path d="M1310,85.5 v10 M1314,85.5 v10" stroke="#2c7a7b" stroke-width="1.3"/>
+<path d="M1055,234.5 H853.0 V90.5 H615" fill="none" stroke="#2d6a4f" stroke-width="1.3" opacity="0.85"/>
+<path d="M1055,229.5 L1046,234.5 L1055,239.5 M1055,234.5 H1046" stroke="#2d6a4f" fill="none" stroke-width="1.3"/>
+<path d="M610,85.5 v10 M606,85.5 v10" stroke="#2d6a4f" stroke-width="1.3"/>
+<path d="M710,459.5 H644.5 V90.5 H615" fill="none" stroke="#1d4e89" stroke-width="1.3" opacity="0.85"/>
+<path d="M710,454.5 L701,459.5 L710,464.5 M710,459.5 H701" stroke="#1d4e89" fill="none" stroke-width="1.3"/>
+<path d="M610,85.5 v10 M606,85.5 v10" stroke="#1d4e89" stroke-width="1.3"/>
+<path d="M270,531.5 H305.5 V90.5 H365" fill="none" stroke="#9c4221" stroke-width="1.3" opacity="0.85"/>
+<path d="M270,526.5 L279,531.5 L270,536.5 M270,531.5 H279" stroke="#9c4221" fill="none" stroke-width="1.3"/>
+<path d="M370,85.5 v10 M374,85.5 v10" stroke="#9c4221" stroke-width="1.3"/>
+<path d="M615,762.5 h46 V90.5 H615" fill="none" stroke="#6b46c1" stroke-width="1.3" opacity="0.85"/>
+<path d="M615,757.5 L624,762.5 L615,767.5 M615,762.5 H624" stroke="#6b46c1" fill="none" stroke-width="1.3"/>
+<path d="M620,85.5 v10 M624,85.5 v10" stroke="#6b46c1" stroke-width="1.3"/>
+<path d="M270,189.5 h18 V90.5 H270" fill="none" stroke="#975a16" stroke-width="1.3" opacity="0.85"/>
+<path d="M270,184.5 L279,189.5 L270,194.5 M270,189.5 H279" stroke="#975a16" fill="none" stroke-width="1.3"/>
+<path d="M275,85.5 v10 M279,85.5 v10" stroke="#975a16" stroke-width="1.3"/>
+<path d="M270,204.5 h25 V273.5 H270" fill="none" stroke="#2c7a7b" stroke-width="1.3" opacity="0.85"/>
+<path d="M270,199.5 L279,204.5 L270,209.5 M270,204.5 H279" stroke="#2c7a7b" fill="none" stroke-width="1.3"/>
+<path d="M275,268.5 v10 M279,268.5 v10" stroke="#2c7a7b" stroke-width="1.3"/>
+<path d="M1745,90.5 H1709.5 V498.5 H1650" fill="none" stroke="#2d6a4f" stroke-width="1.3" opacity="0.85"/>
+<path d="M1745,85.5 L1736,90.5 L1745,95.5 M1745,90.5 H1736" stroke="#2d6a4f" fill="none" stroke-width="1.3"/>
+<path d="M1645,493.5 v10 M1641,493.5 v10" stroke="#2d6a4f" stroke-width="1.3"/>
+<path d="M1995,105.5 h39 V174.5 H1995" fill="none" stroke="#1d4e89" stroke-width="1.3" opacity="0.85"/>
+<path d="M1995,100.5 L2004,105.5 L1995,110.5 M1995,105.5 H2004" stroke="#1d4e89" fill="none" stroke-width="1.3"/>
+<path d="M2000,169.5 v10 M2004,169.5 v10" stroke="#1d4e89" stroke-width="1.3"/>
+<path d="M1650,498.5 h46 V309.5 H1650" fill="none" stroke="#9c4221" stroke-width="1.3" opacity="0.85"/>
+<path d="M1650,493.5 L1659,498.5 L1650,503.5 M1650,498.5 H1659" stroke="#9c4221" fill="none" stroke-width="1.3"/>
+<path d="M1655,304.5 v10 M1659,304.5 v10" stroke="#9c4221" stroke-width="1.3"/>
+<path d="M1650,513.5 h18 V309.5 H1650" fill="none" stroke="#6b46c1" stroke-width="1.3" opacity="0.85"/>
+<path d="M1650,508.5 L1659,513.5 L1650,518.5 M1650,513.5 H1659" stroke="#6b46c1" fill="none" stroke-width="1.3"/>
+<path d="M1655,304.5 v10 M1659,304.5 v10" stroke="#6b46c1" stroke-width="1.3"/>
+<path d="M710,105.5 H656.5 V90.5 H615" fill="none" stroke="#975a16" stroke-width="1.3" opacity="0.85"/>
+<path d="M710,100.5 L701,105.5 L710,110.5 M710,105.5 H701" stroke="#975a16" fill="none" stroke-width="1.3"/>
+<path d="M610,85.5 v10 M606,85.5 v10" stroke="#975a16" stroke-width="1.3"/>
+<path d="M960,135.5 H1007.5 V90.5 H1055" fill="none" stroke="#2c7a7b" stroke-width="1.3" opacity="0.85"/>
+<path d="M960,130.5 L969,135.5 L960,140.5 M960,135.5 H969" stroke="#2c7a7b" fill="none" stroke-width="1.3"/>
+<path d="M1060,85.5 v10 M1064,85.5 v10" stroke="#2c7a7b" stroke-width="1.3"/>
+<path d="M960,360.5 H1013.5 V303.5 H1055" fill="none" stroke="#2d6a4f" stroke-width="1.3" opacity="0.85"/>
+<path d="M960,355.5 L969,360.5 L960,365.5 M960,360.5 H969" stroke="#2d6a4f" fill="none" stroke-width="1.3"/>
+<path d="M1060,298.5 v10 M1064,298.5 v10" stroke="#2d6a4f" stroke-width="1.3"/>
+<path d="M1055,462.5 H847.0 V90.5 H615" fill="none" stroke="#1d4e89" stroke-width="1.3" opacity="0.85"/>
+<path d="M1055,457.5 L1046,462.5 L1055,467.5 M1055,462.5 H1046" stroke="#1d4e89" fill="none" stroke-width="1.3"/>
+<path d="M610,85.5 v10 M606,85.5 v10" stroke="#1d4e89" stroke-width="1.3"/>
+<path d="M1305,477.5 h18 V576.5 H1305" fill="none" stroke="#9c4221" stroke-width="1.3" opacity="0.85"/>
+<path d="M1305,472.5 L1314,477.5 L1305,482.5 M1305,477.5 H1314" stroke="#9c4221" fill="none" stroke-width="1.3"/>
+<path d="M1310,571.5 v10 M1314,571.5 v10" stroke="#9c4221" stroke-width="1.3"/>
+<path d="M615,354.5 h25 V90.5 H615" fill="none" stroke="#6b46c1" stroke-width="1.3" opacity="0.85"/>
+<path d="M615,349.5 L624,354.5 L615,359.5 M615,354.5 H624" stroke="#6b46c1" fill="none" stroke-width="1.3"/>
+<path d="M620,85.5 v10 M624,85.5 v10" stroke="#6b46c1" stroke-width="1.3"/>
+<path d="M615,384.5 H823.0 V90.5 H1055" fill="none" stroke="#975a16" stroke-width="1.3" opacity="0.85"/>
+<path d="M615,379.5 L624,384.5 L615,389.5 M615,384.5 H624" stroke="#975a16" fill="none" stroke-width="1.3"/>
+<path d="M1060,85.5 v10 M1064,85.5 v10" stroke="#975a16" stroke-width="1.3"/>
+<path d="M615,444.5 H829.0 V303.5 H1055" fill="none" stroke="#2c7a7b" stroke-width="1.3" opacity="0.85"/>
+<path d="M615,439.5 L624,444.5 L615,449.5 M615,444.5 H624" stroke="#2c7a7b" fill="none" stroke-width="1.3"/>
+<path d="M1060,298.5 v10 M1064,298.5 v10" stroke="#2c7a7b" stroke-width="1.3"/>
+<path d="M270,372.5 H317.5 V90.5 H365" fill="none" stroke="#2d6a4f" stroke-width="1.3" opacity="0.85"/>
+<path d="M270,367.5 L279,372.5 L270,377.5 M270,372.5 H279" stroke="#2d6a4f" fill="none" stroke-width="1.3"/>
+<path d="M370,85.5 v10 M374,85.5 v10" stroke="#2d6a4f" stroke-width="1.3"/>
+<path d="M365,150.5 H323.5 V90.5 H270" fill="none" stroke="#1d4e89" stroke-width="1.3" opacity="0.85"/>
+<path d="M365,145.5 L356,150.5 L365,155.5 M365,150.5 H356" stroke="#1d4e89" fill="none" stroke-width="1.3"/>
+<path d="M265,85.5 v10 M261,85.5 v10" stroke="#1d4e89" stroke-width="1.3"/>
+<path d="M1995,636.5 h25 V447.5 H1995" fill="none" stroke="#9c4221" stroke-width="1.3" opacity="0.85"/>
+<path d="M1995,631.5 L2004,636.5 L1995,641.5 M1995,636.5 H2004" stroke="#9c4221" fill="none" stroke-width="1.3"/>
+<path d="M2000,442.5 v10 M2004,442.5 v10" stroke="#9c4221" stroke-width="1.3"/>
+<g><title>Catálogo de roles RBAC</title><rect x="20" y="60" width="250" height="73" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="20" y="60" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="28" y="75" font-size="12.5" font-weight="bold" fill="#fff">roles</text>
+<text x="26" y="94" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">name</text>
+<text x="152" y="94" font-size="9.5" fill="#555">user_role</text>
+<text x="264" y="94" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="26" y="109" font-size="10.5" fill="#1a1a1a">description</text>
+<text x="152" y="109" font-size="9.5" fill="#555">varchar(255)</text>
+<text x="26" y="124" font-size="10.5" fill="#1a1a1a">level</text>
+<text x="152" y="124" font-size="9.5" fill="#555">int2</text>
+</g>
+<g><title>Relación N:M entre roles y permisos</title><rect x="20" y="159" width="250" height="58" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="20" y="159" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="28" y="174" font-size="12.5" font-weight="bold" fill="#fff">role_permissions</text>
+<text x="26" y="193" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">role</text>
+<text x="152" y="193" font-size="9.5" fill="#555">user_role</text>
+<text x="264" y="193" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+<text x="26" y="208" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">permission_code</text>
+<text x="152" y="208" font-size="9.5" fill="#555">varchar(64)</text>
+<text x="264" y="208" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+</g>
+<g><title>Catálogo de permisos atómicos RBAC</title><rect x="20" y="243" width="250" height="58" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="20" y="243" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="28" y="258" font-size="12.5" font-weight="bold" fill="#fff">permissions</text>
+<text x="26" y="277" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">code</text>
+<text x="152" y="277" font-size="9.5" fill="#555">varchar(64)</text>
+<text x="264" y="277" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="26" y="292" font-size="10.5" fill="#1a1a1a">description</text>
+<text x="152" y="292" font-size="9.5" fill="#555">varchar(255)</text>
+</g>
+<g><title>Tokens de un solo uso para restablecer contraseña y verificar correo (solo hash)</title><rect x="20" y="327" width="250" height="133" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="20" y="327" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="28" y="342" font-size="12.5" font-weight="bold" fill="#fff">user_tokens</text>
+<text x="26" y="361" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="152" y="361" font-size="9.5" fill="#555">uuid</text>
+<text x="264" y="361" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="26" y="376" font-size="10.5" fill="#1a1a1a">user_id</text>
+<text x="152" y="376" font-size="9.5" fill="#555">uuid</text>
+<text x="264" y="376" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="26" y="391" font-size="10.5" fill="#1a1a1a">purpose</text>
+<text x="152" y="391" font-size="9.5" fill="#555">token_purpose</text>
+<text x="26" y="406" font-size="10.5" fill="#1a1a1a">token_hash</text>
+<text x="152" y="406" font-size="9.5" fill="#555">char(64)</text>
+<text x="264" y="406" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="26" y="421" font-size="10.5" fill="#1a1a1a">expires_at</text>
+<text x="152" y="421" font-size="9.5" fill="#555">timestamptz</text>
+<text x="26" y="436" font-size="10.5" fill="#1a1a1a">used_at</text>
+<text x="152" y="436" font-size="9.5" fill="#555">timestamptz</text>
+<text x="26" y="451" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="152" y="451" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Refresh tokens rotativos; cada familia es una sesión (dispositivo). Solo se guarda el hash</title><rect x="20" y="486" width="250" height="193" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="20" y="486" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="28" y="501" font-size="12.5" font-weight="bold" fill="#fff">refresh_tokens</text>
+<text x="26" y="520" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="152" y="520" font-size="9.5" fill="#555">uuid</text>
+<text x="264" y="520" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="26" y="535" font-size="10.5" fill="#1a1a1a">user_id</text>
+<text x="152" y="535" font-size="9.5" fill="#555">uuid</text>
+<text x="264" y="535" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="26" y="550" font-size="10.5" fill="#1a1a1a">family_id</text>
+<text x="152" y="550" font-size="9.5" fill="#555">uuid</text>
+<text x="26" y="565" font-size="10.5" fill="#1a1a1a">token_hash</text>
+<text x="152" y="565" font-size="9.5" fill="#555">char(64)</text>
+<text x="264" y="565" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="26" y="580" font-size="10.5" fill="#1a1a1a">expires_at</text>
+<text x="152" y="580" font-size="9.5" fill="#555">timestamptz</text>
+<text x="26" y="595" font-size="10.5" fill="#1a1a1a">revoked_at</text>
+<text x="152" y="595" font-size="9.5" fill="#555">timestamptz</text>
+<text x="26" y="610" font-size="10.5" fill="#1a1a1a">replaced_by_id</text>
+<text x="152" y="610" font-size="9.5" fill="#555">uuid</text>
+<text x="26" y="625" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="152" y="625" font-size="9.5" fill="#555">timestamptz</text>
+<text x="26" y="640" font-size="10.5" fill="#1a1a1a">session_created_at</text>
+<text x="152" y="640" font-size="9.5" fill="#555">timestamptz</text>
+<text x="26" y="655" font-size="10.5" fill="#1a1a1a">last_used_at</text>
+<text x="152" y="655" font-size="9.5" fill="#555">timestamptz</text>
+<text x="26" y="670" font-size="10.5" fill="#1a1a1a">user_agent</text>
+<text x="152" y="670" font-size="9.5" fill="#555">varchar(255)</text>
+</g>
+<g><title>Cuentas de usuario. Datos personales mínimos (LFPDPPP); la contraseña solo como hash Argon2id</title><rect x="365" y="60" width="250" height="238" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="365" y="60" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="373" y="75" font-size="12.5" font-weight="bold" fill="#fff">users</text>
+<text x="371" y="94" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="497" y="94" font-size="9.5" fill="#555">uuid</text>
+<text x="609" y="94" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="371" y="109" font-size="10.5" fill="#1a1a1a">email</text>
+<text x="497" y="109" font-size="9.5" fill="#555">varchar(254)</text>
+<text x="609" y="109" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="371" y="124" font-size="10.5" fill="#1a1a1a">password_hash</text>
+<text x="497" y="124" font-size="9.5" fill="#555">varchar(255)</text>
+<text x="371" y="139" font-size="10.5" fill="#1a1a1a">full_name</text>
+<text x="497" y="139" font-size="9.5" fill="#555">varchar(120)</text>
+<text x="371" y="154" font-size="10.5" fill="#1a1a1a">role</text>
+<text x="497" y="154" font-size="9.5" fill="#555">user_role</text>
+<text x="609" y="154" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="371" y="169" font-size="10.5" fill="#1a1a1a">is_active</text>
+<text x="497" y="169" font-size="9.5" fill="#555">bool</text>
+<text x="371" y="184" font-size="10.5" fill="#1a1a1a">failed_login_attempts</text>
+<text x="497" y="184" font-size="9.5" fill="#555">int4</text>
+<text x="371" y="199" font-size="10.5" fill="#1a1a1a">locked_until</text>
+<text x="497" y="199" font-size="9.5" fill="#555">timestamptz</text>
+<text x="371" y="214" font-size="10.5" fill="#1a1a1a">last_login_at</text>
+<text x="497" y="214" font-size="9.5" fill="#555">timestamptz</text>
+<text x="371" y="229" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="497" y="229" font-size="9.5" fill="#555">timestamptz</text>
+<text x="371" y="244" font-size="10.5" fill="#1a1a1a">updated_at</text>
+<text x="497" y="244" font-size="9.5" fill="#555">timestamptz</text>
+<text x="371" y="259" font-size="10.5" fill="#1a1a1a">email_verified_at</text>
+<text x="497" y="259" font-size="9.5" fill="#555">timestamptz</text>
+<text x="371" y="274" font-size="10.5" fill="#1a1a1a">ranking_opt_in</text>
+<text x="497" y="274" font-size="9.5" fill="#555">bool</text>
+<text x="371" y="289" font-size="10.5" fill="#1a1a1a">token_version</text>
+<text x="497" y="289" font-size="9.5" fill="#555">int4</text>
+</g>
+<g><title>Preferencias del usuario (1:1 con users; normalización del antiguo JSONB)</title><rect x="365" y="324" width="250" height="133" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="365" y="324" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="373" y="339" font-size="12.5" font-weight="bold" fill="#fff">user_preferences</text>
+<text x="371" y="358" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">user_id</text>
+<text x="497" y="358" font-size="9.5" fill="#555">uuid</text>
+<text x="609" y="358" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+<text x="371" y="373" font-size="10.5" fill="#1a1a1a">language</text>
+<text x="497" y="373" font-size="9.5" fill="#555">varchar(2)</text>
+<text x="371" y="388" font-size="10.5" fill="#1a1a1a">default_mode</text>
+<text x="497" y="388" font-size="9.5" fill="#555">transport_mode</text>
+<text x="609" y="388" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="371" y="403" font-size="10.5" fill="#1a1a1a">weekly_goal_trips</text>
+<text x="497" y="403" font-size="9.5" fill="#555">int2</text>
+<text x="371" y="418" font-size="10.5" fill="#1a1a1a">email_notifications</text>
+<text x="497" y="418" font-size="9.5" fill="#555">bool</text>
+<text x="371" y="433" font-size="10.5" fill="#1a1a1a">updated_at</text>
+<text x="497" y="433" font-size="9.5" fill="#555">timestamptz</text>
+<text x="371" y="448" font-size="10.5" fill="#1a1a1a">default_vehicle_type</text>
+<text x="497" y="448" font-size="9.5" fill="#555">vehicle_type</text>
+<text x="609" y="448" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+</g>
+<g><title>Bitácora de auditoría de operaciones administrativas (append-only)</title><rect x="365" y="483" width="250" height="133" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="365" y="483" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="373" y="498" font-size="12.5" font-weight="bold" fill="#fff">audit_logs</text>
+<text x="371" y="517" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="497" y="517" font-size="9.5" fill="#555">uuid</text>
+<text x="609" y="517" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="371" y="532" font-size="10.5" fill="#1a1a1a">actor_id</text>
+<text x="497" y="532" font-size="9.5" fill="#555">uuid</text>
+<text x="609" y="532" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="371" y="547" font-size="10.5" fill="#1a1a1a">action</text>
+<text x="497" y="547" font-size="9.5" fill="#555">varchar(64)</text>
+<text x="371" y="562" font-size="10.5" fill="#1a1a1a">entity_type</text>
+<text x="497" y="562" font-size="9.5" fill="#555">varchar(32)</text>
+<text x="371" y="577" font-size="10.5" fill="#1a1a1a">entity_id</text>
+<text x="497" y="577" font-size="9.5" fill="#555">uuid</text>
+<text x="371" y="592" font-size="10.5" fill="#1a1a1a">payload</text>
+<text x="497" y="592" font-size="9.5" fill="#555">jsonb</text>
+<text x="371" y="607" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="497" y="607" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Informes administrativos generados (CSV/PDF), sin datos personales</title><rect x="365" y="642" width="250" height="148" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="365" y="642" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="373" y="657" font-size="12.5" font-weight="bold" fill="#fff">reports</text>
+<text x="371" y="676" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="497" y="676" font-size="9.5" fill="#555">uuid</text>
+<text x="609" y="676" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="371" y="691" font-size="10.5" fill="#1a1a1a">report_type</text>
+<text x="497" y="691" font-size="9.5" fill="#555">report_type</text>
+<text x="371" y="706" font-size="10.5" fill="#1a1a1a">format</text>
+<text x="497" y="706" font-size="9.5" fill="#555">report_format</text>
+<text x="371" y="721" font-size="10.5" fill="#1a1a1a">parameters</text>
+<text x="497" y="721" font-size="9.5" fill="#555">jsonb</text>
+<text x="371" y="736" font-size="10.5" fill="#1a1a1a">row_count</text>
+<text x="497" y="736" font-size="9.5" fill="#555">int4</text>
+<text x="371" y="751" font-size="10.5" fill="#1a1a1a">content</text>
+<text x="497" y="751" font-size="9.5" fill="#555">bytea</text>
+<text x="371" y="766" font-size="10.5" fill="#1a1a1a">created_by</text>
+<text x="497" y="766" font-size="9.5" fill="#555">uuid</text>
+<text x="609" y="766" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="371" y="781" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="497" y="781" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Viajes registrados. La distancia, el CO2 y los puntos los calcula solo el servidor</title><rect x="710" y="60" width="250" height="328" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="710" y="60" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="718" y="75" font-size="12.5" font-weight="bold" fill="#fff">trips</text>
+<text x="716" y="94" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="842" y="94" font-size="9.5" fill="#555">uuid</text>
+<text x="954" y="94" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="716" y="109" font-size="10.5" fill="#1a1a1a">user_id</text>
+<text x="842" y="109" font-size="9.5" fill="#555">uuid</text>
+<text x="954" y="109" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK·UQ</text>
+<text x="716" y="124" font-size="10.5" fill="#1a1a1a">client_trip_id</text>
+<text x="842" y="124" font-size="9.5" fill="#555">uuid</text>
+<text x="954" y="124" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="716" y="139" font-size="10.5" fill="#1a1a1a">mode</text>
+<text x="842" y="139" font-size="9.5" fill="#555">transport_mode</text>
+<text x="954" y="139" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="716" y="154" font-size="10.5" fill="#1a1a1a">status</text>
+<text x="842" y="154" font-size="9.5" fill="#555">trip_status</text>
+<text x="716" y="169" font-size="10.5" fill="#1a1a1a">started_at</text>
+<text x="842" y="169" font-size="9.5" fill="#555">timestamptz</text>
+<text x="716" y="184" font-size="10.5" fill="#1a1a1a">ended_at</text>
+<text x="842" y="184" font-size="9.5" fill="#555">timestamptz</text>
+<text x="716" y="199" font-size="10.5" fill="#1a1a1a">distance_m</text>
+<text x="842" y="199" font-size="9.5" fill="#555">float8</text>
+<text x="716" y="214" font-size="10.5" fill="#1a1a1a">duration_s</text>
+<text x="842" y="214" font-size="9.5" fill="#555">int4</text>
+<text x="716" y="229" font-size="10.5" fill="#1a1a1a">route</text>
+<text x="842" y="229" font-size="9.5" fill="#555">geometry(LineString,4326</text>
+<text x="716" y="244" font-size="10.5" fill="#1a1a1a">emission_factor_g_per_km</text>
+<text x="842" y="244" font-size="9.5" fill="#555">float8</text>
+<text x="716" y="259" font-size="10.5" fill="#1a1a1a">co2_emitted_g</text>
+<text x="842" y="259" font-size="9.5" fill="#555">float8</text>
+<text x="716" y="274" font-size="10.5" fill="#1a1a1a">co2_saved_g</text>
+<text x="842" y="274" font-size="9.5" fill="#555">float8</text>
+<text x="716" y="289" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="842" y="289" font-size="9.5" fill="#555">timestamptz</text>
+<text x="716" y="304" font-size="10.5" fill="#1a1a1a">source</text>
+<text x="842" y="304" font-size="9.5" fill="#555">trip_source</text>
+<text x="716" y="319" font-size="10.5" fill="#1a1a1a">points</text>
+<text x="842" y="319" font-size="9.5" fill="#555">int4</text>
+<text x="716" y="334" font-size="10.5" fill="#1a1a1a">recurrence_id</text>
+<text x="842" y="334" font-size="9.5" fill="#555">uuid</text>
+<text x="716" y="349" font-size="10.5" fill="#1a1a1a">updated_at</text>
+<text x="842" y="349" font-size="9.5" fill="#555">timestamptz</text>
+<text x="716" y="364" font-size="10.5" fill="#1a1a1a">vehicle_type</text>
+<text x="842" y="364" font-size="9.5" fill="#555">vehicle_type</text>
+<text x="954" y="364" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="716" y="379" font-size="10.5" fill="#1a1a1a">occupants</text>
+<text x="842" y="379" font-size="9.5" fill="#555">int2</text>
+</g>
+<g><title>Notificaciones in-app; se conservan 90 días</title><rect x="710" y="414" width="250" height="148" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="710" y="414" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="718" y="429" font-size="12.5" font-weight="bold" fill="#fff">notifications</text>
+<text x="716" y="448" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="842" y="448" font-size="9.5" fill="#555">uuid</text>
+<text x="954" y="448" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="716" y="463" font-size="10.5" fill="#1a1a1a">user_id</text>
+<text x="842" y="463" font-size="9.5" fill="#555">uuid</text>
+<text x="954" y="463" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="716" y="478" font-size="10.5" fill="#1a1a1a">type</text>
+<text x="842" y="478" font-size="9.5" fill="#555">notification_type</text>
+<text x="716" y="493" font-size="10.5" fill="#1a1a1a">title</text>
+<text x="842" y="493" font-size="9.5" fill="#555">varchar(120)</text>
+<text x="716" y="508" font-size="10.5" fill="#1a1a1a">body</text>
+<text x="842" y="508" font-size="9.5" fill="#555">varchar(500)</text>
+<text x="716" y="523" font-size="10.5" fill="#1a1a1a">data</text>
+<text x="842" y="523" font-size="9.5" fill="#555">jsonb</text>
+<text x="716" y="538" font-size="10.5" fill="#1a1a1a">read_at</text>
+<text x="842" y="538" font-size="9.5" fill="#555">timestamptz</text>
+<text x="716" y="553" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="842" y="553" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Configuración por medio de transporte (sin factor ni etiqueta)</title><rect x="1055" y="60" width="250" height="73" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1055" y="60" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1063" y="75" font-size="12.5" font-weight="bold" fill="#fff">transport_modes</text>
+<text x="1061" y="94" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">mode</text>
+<text x="1187" y="94" font-size="9.5" fill="#555">transport_mode</text>
+<text x="1299" y="94" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1061" y="109" font-size="10.5" fill="#1a1a1a">max_speed_kmh</text>
+<text x="1187" y="109" font-size="9.5" fill="#555">float8</text>
+<text x="1061" y="124" font-size="10.5" fill="#1a1a1a">is_active</text>
+<text x="1187" y="124" font-size="9.5" fill="#555">bool</text>
+</g>
+<g><title>Factores de emisión vigentes por medio de transporte (g CO2/km por pasajero)</title><rect x="1055" y="159" width="250" height="88" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1055" y="159" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1063" y="174" font-size="12.5" font-weight="bold" fill="#fff">emission_factors</text>
+<text x="1061" y="193" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">mode</text>
+<text x="1187" y="193" font-size="9.5" fill="#555">transport_mode</text>
+<text x="1299" y="193" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+<text x="1061" y="208" font-size="10.5" fill="#1a1a1a">grams_per_km</text>
+<text x="1187" y="208" font-size="9.5" fill="#555">float8</text>
+<text x="1061" y="223" font-size="10.5" fill="#1a1a1a">valid_from</text>
+<text x="1187" y="223" font-size="9.5" fill="#555">timestamptz</text>
+<text x="1061" y="238" font-size="10.5" fill="#1a1a1a">updated_by</text>
+<text x="1187" y="238" font-size="9.5" fill="#555">uuid</text>
+<text x="1299" y="238" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+</g>
+<g><title>Tipos de automóvil y su factor de emisión por vehículo, con fuente citada (APA)</title><rect x="1055" y="273" width="250" height="118" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1055" y="273" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1063" y="288" font-size="12.5" font-weight="bold" fill="#fff">vehicle_types</text>
+<text x="1061" y="307" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">code</text>
+<text x="1187" y="307" font-size="9.5" fill="#555">vehicle_type</text>
+<text x="1299" y="307" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1061" y="322" font-size="10.5" fill="#1a1a1a">grams_per_km</text>
+<text x="1187" y="322" font-size="9.5" fill="#555">float8</text>
+<text x="1061" y="337" font-size="10.5" fill="#1a1a1a">max_occupants</text>
+<text x="1187" y="337" font-size="9.5" fill="#555">int2</text>
+<text x="1061" y="352" font-size="10.5" fill="#1a1a1a">is_active</text>
+<text x="1187" y="352" font-size="9.5" fill="#555">bool</text>
+<text x="1061" y="367" font-size="10.5" fill="#1a1a1a">source</text>
+<text x="1187" y="367" font-size="9.5" fill="#555">varchar(300)</text>
+<text x="1061" y="382" font-size="10.5" fill="#1a1a1a">updated_at</text>
+<text x="1187" y="382" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Logros obtenidos por cada usuario (N:M users–achievements)</title><rect x="1055" y="417" width="250" height="103" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1055" y="417" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1063" y="432" font-size="12.5" font-weight="bold" fill="#fff">user_achievements</text>
+<text x="1061" y="451" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="1187" y="451" font-size="9.5" fill="#555">uuid</text>
+<text x="1299" y="451" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1061" y="466" font-size="10.5" fill="#1a1a1a">user_id</text>
+<text x="1187" y="466" font-size="9.5" fill="#555">uuid</text>
+<text x="1299" y="466" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK·UQ</text>
+<text x="1061" y="481" font-size="10.5" fill="#1a1a1a">achievement_id</text>
+<text x="1187" y="481" font-size="9.5" fill="#555">uuid</text>
+<text x="1299" y="481" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK·UQ</text>
+<text x="1061" y="496" font-size="10.5" fill="#1a1a1a">bonus_points</text>
+<text x="1187" y="496" font-size="9.5" fill="#555">int4</text>
+<text x="1061" y="511" font-size="10.5" fill="#1a1a1a">awarded_at</text>
+<text x="1187" y="511" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Catálogo de logros de gamificación</title><rect x="1055" y="546" width="250" height="193" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1055" y="546" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1063" y="561" font-size="12.5" font-weight="bold" fill="#fff">achievements</text>
+<text x="1061" y="580" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="1187" y="580" font-size="9.5" fill="#555">uuid</text>
+<text x="1299" y="580" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1061" y="595" font-size="10.5" fill="#1a1a1a">code</text>
+<text x="1187" y="595" font-size="9.5" fill="#555">varchar(40)</text>
+<text x="1299" y="595" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="1061" y="610" font-size="10.5" fill="#1a1a1a">name</text>
+<text x="1187" y="610" font-size="9.5" fill="#555">varchar(80)</text>
+<text x="1061" y="625" font-size="10.5" fill="#1a1a1a">description</text>
+<text x="1187" y="625" font-size="9.5" fill="#555">varchar(300)</text>
+<text x="1061" y="640" font-size="10.5" fill="#1a1a1a">icon</text>
+<text x="1187" y="640" font-size="9.5" fill="#555">varchar(40)</text>
+<text x="1061" y="655" font-size="10.5" fill="#1a1a1a">criterion</text>
+<text x="1187" y="655" font-size="9.5" fill="#555">achievement_criterion</text>
+<text x="1061" y="670" font-size="10.5" fill="#1a1a1a">threshold</text>
+<text x="1187" y="670" font-size="9.5" fill="#555">float8</text>
+<text x="1061" y="685" font-size="10.5" fill="#1a1a1a">bonus_points</text>
+<text x="1187" y="685" font-size="9.5" fill="#555">int4</text>
+<text x="1061" y="700" font-size="10.5" fill="#1a1a1a">is_active</text>
+<text x="1187" y="700" font-size="9.5" fill="#555">bool</text>
+<text x="1061" y="715" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="1187" y="715" font-size="9.5" fill="#555">timestamptz</text>
+<text x="1061" y="730" font-size="10.5" fill="#1a1a1a">updated_at</text>
+<text x="1187" y="730" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Reportes ciudadanos sobre infraestructura y seguridad</title><rect x="1400" y="60" width="250" height="193" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1400" y="60" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1408" y="75" font-size="12.5" font-weight="bold" fill="#fff">citizen_reports</text>
+<text x="1406" y="94" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="1532" y="94" font-size="9.5" fill="#555">uuid</text>
+<text x="1644" y="94" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1406" y="109" font-size="10.5" fill="#1a1a1a">reporter_id</text>
+<text x="1532" y="109" font-size="9.5" fill="#555">uuid</text>
+<text x="1644" y="109" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="1406" y="124" font-size="10.5" fill="#1a1a1a">category</text>
+<text x="1532" y="124" font-size="9.5" fill="#555">citizen_report_category</text>
+<text x="1406" y="139" font-size="10.5" fill="#1a1a1a">status</text>
+<text x="1532" y="139" font-size="9.5" fill="#555">citizen_report_status</text>
+<text x="1406" y="154" font-size="10.5" fill="#1a1a1a">title</text>
+<text x="1532" y="154" font-size="9.5" fill="#555">varchar(120)</text>
+<text x="1406" y="169" font-size="10.5" fill="#1a1a1a">description</text>
+<text x="1532" y="169" font-size="9.5" fill="#555">text</text>
+<text x="1406" y="184" font-size="10.5" fill="#1a1a1a">location</text>
+<text x="1532" y="184" font-size="9.5" fill="#555">geometry(Point,4326)</text>
+<text x="1406" y="199" font-size="10.5" fill="#1a1a1a">poi_id</text>
+<text x="1532" y="199" font-size="9.5" fill="#555">uuid</text>
+<text x="1644" y="199" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="1406" y="214" font-size="10.5" fill="#1a1a1a">resolution_note</text>
+<text x="1532" y="214" font-size="9.5" fill="#555">varchar(1000)</text>
+<text x="1406" y="229" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="1532" y="229" font-size="9.5" fill="#555">timestamptz</text>
+<text x="1406" y="244" font-size="10.5" fill="#1a1a1a">updated_at</text>
+<text x="1532" y="244" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Puntos de interés (supertipo de la especialización EER disjunta y parcial)</title><rect x="1400" y="279" width="250" height="163" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1400" y="279" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1408" y="294" font-size="12.5" font-weight="bold" fill="#fff">pois</text>
+<text x="1406" y="313" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="1532" y="313" font-size="9.5" fill="#555">uuid</text>
+<text x="1644" y="313" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·UQ</text>
+<text x="1406" y="328" font-size="10.5" fill="#1a1a1a">name</text>
+<text x="1532" y="328" font-size="9.5" fill="#555">varchar(160)</text>
+<text x="1406" y="343" font-size="10.5" fill="#1a1a1a">category</text>
+<text x="1532" y="343" font-size="9.5" fill="#555">poi_category</text>
+<text x="1644" y="343" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="1406" y="358" font-size="10.5" fill="#1a1a1a">description</text>
+<text x="1532" y="358" font-size="9.5" fill="#555">text</text>
+<text x="1406" y="373" font-size="10.5" fill="#1a1a1a">attributes</text>
+<text x="1532" y="373" font-size="9.5" fill="#555">jsonb</text>
+<text x="1406" y="388" font-size="10.5" fill="#1a1a1a">location</text>
+<text x="1532" y="388" font-size="9.5" fill="#555">geometry(Point,4326)</text>
+<text x="1406" y="403" font-size="10.5" fill="#1a1a1a">is_active</text>
+<text x="1532" y="403" font-size="9.5" fill="#555">bool</text>
+<text x="1406" y="418" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="1532" y="418" font-size="9.5" fill="#555">timestamptz</text>
+<text x="1406" y="433" font-size="10.5" fill="#1a1a1a">updated_at</text>
+<text x="1532" y="433" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Subtipo de pois: paradas de autobús (category = BUS_STOP)</title><rect x="1400" y="468" width="250" height="88" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1400" y="468" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1408" y="483" font-size="12.5" font-weight="bold" fill="#fff">transit_stops</text>
+<text x="1406" y="502" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">poi_id</text>
+<text x="1532" y="502" font-size="9.5" fill="#555">uuid</text>
+<text x="1644" y="502" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+<text x="1406" y="517" font-size="10.5" fill="#1a1a1a">category</text>
+<text x="1532" y="517" font-size="9.5" fill="#555">poi_category</text>
+<text x="1644" y="517" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="1406" y="532" font-size="10.5" fill="#1a1a1a">code</text>
+<text x="1532" y="532" font-size="9.5" fill="#555">varchar(32)</text>
+<text x="1644" y="532" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="1406" y="547" font-size="10.5" fill="#1a1a1a">osm_ref</text>
+<text x="1532" y="547" font-size="9.5" fill="#555">varchar(64)</text>
+</g>
+<g><title>Subtipo de pois: estaciones y estacionamientos de bicicleta</title><rect x="1400" y="582" width="250" height="88" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1400" y="582" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1408" y="597" font-size="12.5" font-weight="bold" fill="#fff">bike_stations</text>
+<text x="1406" y="616" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">poi_id</text>
+<text x="1532" y="616" font-size="9.5" fill="#555">uuid</text>
+<text x="1644" y="616" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+<text x="1406" y="631" font-size="10.5" fill="#1a1a1a">category</text>
+<text x="1532" y="631" font-size="9.5" fill="#555">poi_category</text>
+<text x="1644" y="631" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">FK</text>
+<text x="1406" y="646" font-size="10.5" fill="#1a1a1a">code</text>
+<text x="1532" y="646" font-size="9.5" fill="#555">varchar(32)</text>
+<text x="1644" y="646" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="1406" y="661" font-size="10.5" fill="#1a1a1a">capacity</text>
+<text x="1532" y="661" font-size="9.5" fill="#555">int4</text>
+</g>
+<g><title>Relación N:M entre paradas y líneas</title><rect x="1745" y="60" width="250" height="58" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1745" y="60" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1753" y="75" font-size="12.5" font-weight="bold" fill="#fff">stop_lines</text>
+<text x="1751" y="94" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">stop_id</text>
+<text x="1877" y="94" font-size="9.5" fill="#555">uuid</text>
+<text x="1989" y="94" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+<text x="1751" y="109" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">line_id</text>
+<text x="1877" y="109" font-size="9.5" fill="#555">uuid</text>
+<text x="1989" y="109" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+</g>
+<g><title>Líneas de transporte público</title><rect x="1745" y="144" width="250" height="88" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1745" y="144" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1753" y="159" font-size="12.5" font-weight="bold" fill="#fff">transit_lines</text>
+<text x="1751" y="178" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="1877" y="178" font-size="9.5" fill="#555">uuid</text>
+<text x="1989" y="178" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1751" y="193" font-size="10.5" fill="#1a1a1a">code</text>
+<text x="1877" y="193" font-size="9.5" fill="#555">varchar(32)</text>
+<text x="1989" y="193" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="1751" y="208" font-size="10.5" fill="#1a1a1a">name</text>
+<text x="1877" y="208" font-size="9.5" fill="#555">varchar(120)</text>
+<text x="1751" y="223" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="1877" y="223" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Ciclovías (OpenStreetMap, ODbL)</title><rect x="1745" y="258" width="250" height="118" rx="5" fill="#e9f5ee" stroke="#2d6a4f"/><rect x="1745" y="258" width="250" height="22" rx="5" fill="#2d6a4f"/><text x="1753" y="273" font-size="12.5" font-weight="bold" fill="#fff">cycleways</text>
+<text x="1751" y="292" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="1877" y="292" font-size="9.5" fill="#555">uuid</text>
+<text x="1989" y="292" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1751" y="307" font-size="10.5" fill="#1a1a1a">name</text>
+<text x="1877" y="307" font-size="9.5" fill="#555">varchar(160)</text>
+<text x="1751" y="322" font-size="10.5" fill="#1a1a1a">is_protected</text>
+<text x="1877" y="322" font-size="9.5" fill="#555">bool</text>
+<text x="1751" y="337" font-size="10.5" fill="#1a1a1a">osm_id</text>
+<text x="1877" y="337" font-size="9.5" fill="#555">bigint</text>
+<text x="1989" y="337" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="1751" y="352" font-size="10.5" fill="#1a1a1a">geom</text>
+<text x="1877" y="352" font-size="9.5" fill="#555">geometry(LineString,4326</text>
+<text x="1751" y="367" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="1877" y="367" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Zonas de análisis (municipios y AGEB del INEGI, zonas de ADMIN y zonas DEMO)</title><rect x="1745" y="402" width="250" height="178" rx="5" fill="#e8f1fb" stroke="#1d4e89"/><rect x="1745" y="402" width="250" height="22" rx="5" fill="#1d4e89"/><text x="1753" y="417" font-size="12.5" font-weight="bold" fill="#fff">geo.mobility_zones</text>
+<text x="1751" y="436" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">id</text>
+<text x="1877" y="436" font-size="9.5" fill="#555">uuid</text>
+<text x="1989" y="436" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1751" y="451" font-size="10.5" fill="#1a1a1a">code</text>
+<text x="1877" y="451" font-size="9.5" fill="#555">text</text>
+<text x="1989" y="451" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">UQ</text>
+<text x="1751" y="466" font-size="10.5" fill="#1a1a1a">name</text>
+<text x="1877" y="466" font-size="9.5" fill="#555">text</text>
+<text x="1751" y="481" font-size="10.5" fill="#1a1a1a">kind</text>
+<text x="1877" y="481" font-size="9.5" fill="#555">text</text>
+<text x="1751" y="496" font-size="10.5" fill="#1a1a1a">geom</text>
+<text x="1877" y="496" font-size="9.5" fill="#555">geometry(MultiPolygon,43</text>
+<text x="1751" y="511" font-size="10.5" fill="#1a1a1a">geom_utm</text>
+<text x="1877" y="511" font-size="9.5" fill="#555">geometry(MultiPolygon,32</text>
+<text x="1751" y="526" font-size="10.5" fill="#1a1a1a">area_km2</text>
+<text x="1877" y="526" font-size="9.5" fill="#555">float8</text>
+<text x="1751" y="541" font-size="10.5" fill="#1a1a1a">source</text>
+<text x="1877" y="541" font-size="9.5" fill="#555">text</text>
+<text x="1751" y="556" font-size="10.5" fill="#1a1a1a">is_demo</text>
+<text x="1877" y="556" font-size="9.5" fill="#555">bool</text>
+<text x="1751" y="571" font-size="10.5" fill="#1a1a1a">created_at</text>
+<text x="1877" y="571" font-size="9.5" fill="#555">timestamptz</text>
+</g>
+<g><title>Población y vivienda del Censo 2020 (INEGI) por zona</title><rect x="1745" y="606" width="250" height="133" rx="5" fill="#e8f1fb" stroke="#1d4e89"/><rect x="1745" y="606" width="250" height="22" rx="5" fill="#1d4e89"/><text x="1753" y="621" font-size="12.5" font-weight="bold" fill="#fff">geo.zone_census</text>
+<text x="1751" y="640" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">zone_code</text>
+<text x="1877" y="640" font-size="9.5" fill="#555">text</text>
+<text x="1989" y="640" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK·FK</text>
+<text x="1751" y="655" font-size="10.5" font-weight="bold" text-decoration="underline" fill="#1a1a1a">source</text>
+<text x="1877" y="655" font-size="9.5" fill="#555">text</text>
+<text x="1989" y="655" font-size="9" text-anchor="end" fill="#9c4221" font-weight="bold">PK</text>
+<text x="1751" y="670" font-size="10.5" fill="#1a1a1a">pobtot</text>
+<text x="1877" y="670" font-size="9.5" fill="#555">int4</text>
+<text x="1751" y="685" font-size="10.5" fill="#1a1a1a">tvivparhab</text>
+<text x="1877" y="685" font-size="9.5" fill="#555">int4</text>
+<text x="1751" y="700" font-size="10.5" fill="#1a1a1a">vph_autom</text>
+<text x="1877" y="700" font-size="9.5" fill="#555">int4</text>
+<text x="1751" y="715" font-size="10.5" fill="#1a1a1a">vph_moto</text>
+<text x="1877" y="715" font-size="9.5" fill="#555">int4</text>
+<text x="1751" y="730" font-size="10.5" fill="#1a1a1a">vph_bici</text>
+<text x="1877" y="730" font-size="9.5" fill="#555">int4</text>
+</g>
+</svg>

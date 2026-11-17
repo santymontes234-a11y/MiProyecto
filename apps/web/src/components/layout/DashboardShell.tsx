@@ -23,7 +23,10 @@ export function DashboardShell({ nav, title, switchLink, children }: { nav: NavI
   useEffect(() => setOpen(false), [pathname]);
 
   const root = nav[0]?.href;
-  const isActive = (href: string) => (href === root ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
+  const matches = (href: string) => (href === root ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
+  // Gana la entrada más específica (p. ej. /app/viajes/nuevo frente a /app/viajes).
+  const best = nav.filter((i) => matches(i.href)).sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const isActive = (href: string) => href === best;
 
   const sidebar = (
     <div className="flex h-full flex-col gap-6 p-4">

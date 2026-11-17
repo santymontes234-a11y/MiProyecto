@@ -8,6 +8,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./specs",
+  // Las evidencias del informe solo se generan bajo demanda (run-local.sh evidence).
+  testIgnore: process.env.E2E_EVIDENCE_DIR ? [] : ["**/evidencias.spec.ts"],
   fullyParallel: false,
   workers: 1, // el rate limit de /auth/* (10/min/IP) es real: no se desactiva para las pruebas
   retries: 0,

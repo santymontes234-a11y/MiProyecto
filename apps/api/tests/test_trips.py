@@ -20,7 +20,7 @@ def test_create_trip_computes_distance_and_co2_on_server(client, user):
     assert t["duration_s"] == 1200
     assert t["emission_factor_g_per_km"] == 0
     assert t["co2_emitted_g"] == 0
-    assert t["co2_saved_g"] == pytest.approx(t["distance_m"] / 1000 * 192, rel=1e-3)
+    assert t["co2_saved_g"] == pytest.approx(t["distance_m"] / 1000 * 174, rel=1e-3)
     assert t["status"] == "COMPLETED"
     assert t["route"]["type"] == "LineString" and len(t["route"]["coordinates"]) == 3
     assert t["started_at"].endswith("Z")
@@ -30,7 +30,7 @@ def test_bus_trip_partial_savings_and_car_trip_zero(client, user):
     bus = client.post(f"{PREFIX}/trips", headers=auth_header(user), json=trip_payload(mode="BUS")).json()
     km = bus["distance_m"] / 1000
     assert bus["co2_emitted_g"] == pytest.approx(km * 68, rel=1e-3)
-    assert bus["co2_saved_g"] == pytest.approx(km * (192 - 68), rel=1e-3)
+    assert bus["co2_saved_g"] == pytest.approx(km * (174 - 68), rel=1e-3)
     car = client.post(f"{PREFIX}/trips", headers=auth_header(user), json=trip_payload(mode="CAR")).json()
     assert car["co2_saved_g"] == 0
 
@@ -121,8 +121,9 @@ def test_same_client_trip_id_from_other_user_is_independent(client, user):
 def test_estimate(client, user):
     h = auth_header(user)
     r = client.post(f"{PREFIX}/trips/estimate", headers=h, json={"mode": "BICYCLE", "distance_m": 4200})
-    assert r.json() == {"mode": "BICYCLE", "distance_m": 4200, "co2_emitted_g": 0, "co2_saved_g": 806.4,
-                        "emission_factor_g_per_km": 0}
+    assert r.json() == {"mode": "BICYCLE", "distance_m": 4200, "co2_emitted_g": 0, "co2_saved_g": 730.8,
+                        "emission_factor_g_per_km": 0, "points_estimate": 7, "vehicle_type": None,
+                        "occupants": None}
     r = client.post(f"{PREFIX}/trips/estimate", headers=h, json={"mode": "BUS", "route": ROUTE})
     assert r.status_code == 200 and r.json()["distance_m"] > 1000
     both = client.post(f"{PREFIX}/trips/estimate", headers=h, json={"mode": "BUS", "route": ROUTE, "distance_m": 10})

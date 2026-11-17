@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bus, ClipboardList, FileWarning, Gauge, Map, MapPin, Route, ShieldCheck, Users } from "lucide-react";
+import { Award, BarChart3, Bus, ClipboardList, FileText, FileWarning, Gauge, Map, MapPin, Route, ShieldCheck, Users } from "lucide-react";
 import { hasRoleAtLeast } from "@ecomove/shared";
 import { useSession } from "@/components/auth/SessionProvider";
 import { DashboardShell, type NavItem } from "./DashboardShell";
@@ -12,9 +12,11 @@ const NAV: NavItem[] = [
   { href: "/admin/transportes", label: "Medios de transporte", icon: Bus },
   { href: "/admin/estaciones", label: "Estaciones e infraestructura", icon: MapPin },
   { href: "/admin/zonas", label: "Zonas", icon: Map },
+  { href: "/admin/logros", label: "Logros", icon: Award },
   { href: "/admin/reportes", label: "Reportes ciudadanos", icon: FileWarning },
+  { href: "/admin/informes", label: "Informes CSV/PDF", icon: FileText },
   { href: "/admin/estadisticas", label: "Estadísticas", icon: BarChart3 },
-  { href: "/admin/mapa", label: "Mapa de calor", icon: ClipboardList },
+  { href: "/admin/mapa", label: "Mapa analítico", icon: ClipboardList },
 ];
 
 const SUPER_NAV: NavItem[] = [{ href: "/admin/auditoria", label: "Auditoría", icon: ShieldCheck }];

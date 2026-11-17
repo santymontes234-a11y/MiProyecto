@@ -32,6 +32,9 @@ export default function AppLayout() {
         <Stack.Screen name="settings" options={{ title: 'Configuración' }} />
         <Stack.Screen name="notifications" options={{ title: 'Notificaciones' }} />
         <Stack.Screen name="help" options={{ title: 'Ayuda y privacidad' }} />
+        <Stack.Screen name="pending-trips" options={{ title: 'Viajes pendientes' }} />
+        <Stack.Screen name="report" options={{ title: 'Reportar un problema' }} />
+        <Stack.Screen name="my-reports" options={{ title: 'Mis reportes' }} />
         <Stack.Screen name="edit-profile" options={{ title: 'Editar perfil', presentation: 'modal' }} />
         <Stack.Screen name="change-password" options={{ title: 'Cambiar contraseña', presentation: 'modal' }} />
       </Stack>

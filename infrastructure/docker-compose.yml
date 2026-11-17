@@ -37,6 +37,9 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: "5432"
+      OSRM_FOOT_URL: ${OSRM_FOOT_URL:-http://osrm-foot:5000}
+      OSRM_BICYCLE_URL: ${OSRM_BICYCLE_URL:-http://osrm-bicycle:5000}
+      OSRM_CAR_URL: ${OSRM_CAR_URL:-http://osrm-car:5000}
     ports:
       - "${API_PUBLISH_HOST:-127.0.0.1}:8000:8000"   # 0.0.0.0 solo para probar con un teléfono en la LAN
     healthcheck:
@@ -45,5 +48,69 @@ services:
       timeout: 5s
       retries: 10
 
+  # --- Ruteo /routes (contrato §12). Opcional: perfil "routing" (descarga ~700 MB la primera vez).
+  #     docker compose -f infrastructure/docker-compose.yml --env-file .env --profile routing up -d
+  #     Sin este perfil, /routes responde 503 ROUTING_UNAVAILABLE y mobile usa línea recta.
+  osrm-download:
+    profiles: ["routing"]
+    image: debian:bookworm-slim
+    volumes:
+      - osrm_data:/data
+    environment:
+      OSRM_PBF_URL: ${OSRM_PBF_URL:-https://download.geofabrik.de/north-america/mexico-latest.osm.pbf}
+      OSRM_BBOX: ${OSRM_BBOX:--100.65,20.0,-99.0,21.7}
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        if [ -f /data/queretaro.osm.pbf ]; then echo "extracto ya existe"; exit 0; fi
+        apt-get update -qq && apt-get install -y -qq --no-install-recommends curl ca-certificates osmium-tool >/dev/null
+        curl -fsSL "$$OSRM_PBF_URL" -o /data/mexico.osm.pbf
+        osmium extract -b "$$OSRM_BBOX" /data/mexico.osm.pbf -o /data/queretaro.osm.pbf --overwrite
+        rm -f /data/mexico.osm.pbf
+
+  osrm-prepare:
+    profiles: ["routing"]
+    image: osrm/osrm-backend:v5.27.1
+    depends_on:
+      osrm-download:
+        condition: service_completed_successfully
+    volumes:
+      - osrm_data:/data
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        for p in foot bicycle car; do
+          if [ -f /data/$$p/queretaro.osrm.mldgr ]; then echo "$$p listo"; continue; fi
+          mkdir -p /data/$$p && cp /data/queretaro.osm.pbf /data/$$p/queretaro.osm.pbf
+          osrm-extract -p /opt/$$p.lua /data/$$p/queretaro.osm.pbf
+          osrm-partition /data/$$p/queretaro.osrm
+          osrm-customize /data/$$p/queretaro.osrm
+          rm -f /data/$$p/queretaro.osm.pbf
+        done
+
+  osrm-foot: &osrm
+    profiles: ["routing"]
+    image: osrm/osrm-backend:v5.27.1
+    restart: unless-stopped
+    depends_on:
+      osrm-prepare:
+        condition: service_completed_successfully
+    volumes:
+      - osrm_data:/data:ro
+    command: ["osrm-routed", "--algorithm", "mld", "/data/foot/queretaro.osrm"]
+
+  osrm-bicycle:
+    <<: *osrm
+    command: ["osrm-routed", "--algorithm", "mld", "/data/bicycle/queretaro.osrm"]
+
+  osrm-car:
+    <<: *osrm
+    command: ["osrm-routed", "--algorithm", "mld", "/data/car/queretaro.osrm"]
+
 volumes:
   ecomove_pgdata:
+  osrm_data:

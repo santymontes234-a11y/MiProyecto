@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { formatCo2, formatDistance, type Granularity, type TimeSeries, type TimeSeriesQuery } from "@ecomove/shared";
 import { formatNumber, formatPeriod, daysAgoIso } from "@/lib/format";
 import { errorMessage, useApiQuery } from "@/hooks/useApiQuery";
-import { fillSeries } from "@/lib/series";
+import { emptyPoint, fillSeries } from "@/lib/series";
 import { Segmented } from "@/components/ui/Segmented";
 import { ChartCard } from "./ChartCard";
 import { TimeSeriesChart } from "./Charts";
@@ -34,7 +34,7 @@ export function TrendChart({ title, description, load, cacheKey }: { title: stri
   const query = useMemo(() => timeseriesQuery(granularity), [granularity]);
   const { data, error, loading, refetch } = useApiQuery(`${cacheKey}|${granularity}`, () => load(query));
   const m = METRICS.find((x) => x.value === metric)!;
-  const points = useMemo(() => (data ? fillSeries(data.points, granularity, query.from, query.to) : []), [data, granularity, query]);
+  const points = useMemo(() => (data ? fillSeries(data.points, granularity, query.from, query.to, emptyPoint) : []), [data, granularity, query]);
   const chartData = points.map((p) => ({ period: p.period_start, value: p[metric] }));
   const total = points.reduce((acc, p) => acc + p[metric], 0);
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import uuid
 
 import pytest
-
 from conftest import Account, Api, assert_error, login, set_role
 
 ADMIN_READ_ENDPOINTS = [

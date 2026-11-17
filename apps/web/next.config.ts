@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -12,14 +13,14 @@ function apiOrigin(): string {
 }
 
 /**
- * CSP restrictiva (SECURITY §4). Tiles OSM en img-src. 'unsafe-inline' en script-src lo
+ * CSP restrictiva (SECURITY §4). Tiles CARTO (datos OSM) en img-src. 'unsafe-inline' en script-src lo
  * requieren los scripts de hidratación de Next sin nonce; 'unsafe-eval' solo en desarrollo.
  */
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
+  "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
   `connect-src 'self' ${apiOrigin()}${isDev ? " ws: http://localhost:*" : ""}`,
   "frame-ancestors 'none'",
@@ -42,6 +43,11 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Imagen Docker de producción (apps/web/Dockerfile): NEXT_OUTPUT=standalone genera un servidor
+  // autocontenido. El trazado parte de la raíz del monorepo para incluir @ecomove/shared.
+  ...(process.env.NEXT_OUTPUT === "standalone"
+    ? { output: "standalone" as const, outputFileTracingRoot: path.resolve(process.cwd(), "../..") }
+    : {}),
   // @ecomove/shared se consume como fuente TypeScript (sin build).
   transpilePackages: ["@ecomove/shared"],
   async headers() {

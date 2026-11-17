@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { formatCo2, formatDistance, formatDuration } from '@ecomove/shared';
+import { formatCo2, formatDistance, formatDuration, VEHICLE_TYPE_LABELS } from '@ecomove/shared';
 import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Share, View } from 'react-native';
@@ -22,16 +22,16 @@ export default function ResultScreen() {
       if (reduce) pop.setValue(1);
       else Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 4, tension: 60 }).start();
     });
-    if (trip) AccessibilityInfo.announceForAccessibility(`Viaje guardado. Evitaste ${formatCo2(trip.co2_saved_g)} de CO2.`);
+    if (trip) AccessibilityInfo.announceForAccessibility(`Viaje guardado. Evitaste ${formatCo2(trip.co2_saved_g)} de CO2 y ganaste ${trip.points} puntos.`);
   }, [pop, trip]);
 
-  if (!trip) return <Redirect href="/" />;
+  if (!trip) return <Redirect href="/home" />;
   const m = modeMeta(trip.mode);
   const carG = trip.co2_emitted_g + trip.co2_saved_g;
 
   const done = () => {
     draft.reset();
-    router.replace('/');
+    router.replace('/home');
   };
   const viewDetail = () => {
     const id = trip.id;
@@ -60,7 +60,9 @@ export default function ResultScreen() {
         <AppText variant="display" tone="primary" style={{ marginTop: spacing.xs }}>
           {formatCo2(trip.co2_saved_g)}
         </AppText>
-        <AppText tone="muted">de CO₂ evitado frente al automóvil</AppText>
+        <AppText tone="muted" align="center">
+          {trip.occupants ? 'de CO₂ ahorrado frente a ir solo' : 'de CO₂ evitado frente al automóvil'}
+        </AppText>
         <View style={{ marginTop: spacing.md }}>
           <ModeBadge mode={trip.mode} />
         </View>
@@ -74,6 +76,12 @@ export default function ResultScreen() {
       <FadeIn delay={250}>
         <Card style={{ marginTop: spacing.lg }}>
           <Co2Comparison carG={carG} modeG={trip.co2_emitted_g} savedG={trip.co2_saved_g} modeLabel={m.label} />
+          {trip.occupants ? (
+            <AppText variant="bodyStrong" tone="primary" style={{ marginTop: spacing.md }}>
+              Ahorraste {formatCo2(trip.co2_saved_g)} frente a ir solo
+              {trip.vehicle_type ? ` en ${VEHICLE_TYPE_LABELS[trip.vehicle_type].toLowerCase()}` : ''} ({trip.occupants} personas).
+            </AppText>
+          ) : null}
         </Card>
       </FadeIn>
 
@@ -83,9 +91,9 @@ export default function ResultScreen() {
             <Ionicons name="star" size={22} color={colors.warning} />
           </View>
           <View style={{ flex: 1, marginLeft: spacing.md }}>
-            <AppText variant="bodyStrong">Puntos obtenidos</AppText>
-            <AppText variant="caption" tone="muted">
-              El sistema de puntos y recompensas llegará pronto. Este viaje ya cuenta para tus estadísticas.
+            <AppText variant="bodyStrong">+{trip.points} puntos obtenidos</AppText>
+            <AppText variant="caption" tone="muted" onPress={() => router.push('/achievements')}>
+              Revisa tu nivel y tus logros en Logros y recompensas.
             </AppText>
           </View>
         </Card>

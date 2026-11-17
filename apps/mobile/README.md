@@ -135,18 +135,26 @@ Leaflet 1.9 va **empaquetado** en el bundle (`scripts/build-leaflet-asset.mjs`, 
 
 La app **no calcula CO₂**; la distancia local solo sirve para mostrar el progreso.
 
-## Funciones pendientes de contrato
+## Contrato 1.1.0
 
-Estas pantallas existen, pero muestran un estado «en preparación», **sin datos simulados ni llamadas**,
-hasta que se aprueben sus propuestas:
+- **Rutas reales** (`GET /routes`): se muestran en el plan y en la confirmación. Ante `ROUTING_UNAVAILABLE` o sin red, se usa la línea recta, marcada como aproximada.
+- **Estimación por lotes** (`POST /trips/estimate/batch`) con CO₂ y `points_estimate` por modo.
+- **«Ya hice este viaje»**: registra un viaje `PLANNED` con la `route` y el `route_token` tal cual los devolvió `/routes`.
+- **CRUD de viajes**: crear (GPS o planificado), listar, ver detalle, editar el medio o el estado (`PATCH /trips/{id}`, el servidor recalcula) y eliminar.
+- **Viajes pendientes**: si el envío falla por red o por `MODE_INACTIVE`, el viaje se guarda en el teléfono (`expo-file-system`) y se reintenta con el mismo `client_trip_id`.
+- **Gamificación**: puntos por viaje, nivel (`/gamification/me`), logros con progreso, ranking con opt-in (`ranking_opt_in`).
+- **Notificaciones in-app** con `unread_count` (badge en Inicio) y «marcar todo como leído».
+- **Cuenta**: registro con verificación opcional (`isTokenPair`), reset de contraseña y verificación de correo por deep link
+  (`ecomove://reset-password?token=…`, `ecomove://verify-email?token=…`).
+- **Reportes ciudadanos**: desde el mapa o desde un POI, más la lista «Mis reportes».
+- **Identidad**: icono adaptativo, splash y favicon generados desde `docs/brand/logo.svg`; eslogan `BRAND.slogan` en el splash y el login.
 
-| Función | Propuesta |
-|---|---|
-| Ruta real origen→destino y «viaje ya realizado» | [`2026-11-15-mobile-routes-and-trip-source.md`](../../docs/proposals/2026-11-15-mobile-routes-and-trip-source.md) |
-| Puntos, logros y ranking individual | [`2026-11-15-mobile-gamification.md`](../../docs/proposals/2026-11-15-mobile-gamification.md) |
-| Recuperación de contraseña y bandeja de notificaciones | [`2026-11-15-mobile-password-reset-notifications.md`](../../docs/proposals/2026-11-15-mobile-password-reset-notifications.md) |
+## Contrato 1.2.0 (observaciones del usuario)
 
-Mientras tanto, la pantalla de Ranking muestra el agregado anónimo de la ciudad (`GET /stats/city`).
+- **O1 Mapa**: tiles CARTO Voyager (claro) y Dark Matter (oscuro) con datos OSM; pines con sombra, controles de 44 dp y rutas con borde (nota en ADR-005).
+- **O2 Búsqueda de lugares** en el plan: `GET /geocode` con debounce de 400 ms, búsquedas recientes en el teléfono y «Usar mi ubicación»; tocar el mapa sigue funcionando.
+- **O3 Impacto estimado**: si `/trips/estimate/batch` responde 404, se usa `/trips/estimate` por medio, con un mensaje claro si aun así falla.
+- **O4/O5 Vehículo y ocupantes** (CAR/CARPOOL): tipo de vehículo (`/catalog/vehicle-types`) y ocupantes de 1 a 8 (carpooling ≥ 2) en la estimación y el registro; «Ahorraste X frente a ir solo»; vehículo por defecto en Configuración (`Preferences.default_vehicle_type`).
 
 ## Accesibilidad y UX
 
@@ -159,5 +167,4 @@ Mientras tanto, la pantalla de Ranking muestra el agregado anónimo de la ciudad
 ## Limitaciones conocidas
 
 - El registro GPS funciona **solo en primer plano**: el permiso de ubicación en segundo plano se bloqueó a propósito (privacidad).
-- Si la app se cierra durante una subida fallida, el viaje pendiente se pierde: aún no hay cola persistente.
 - `tile.openstreetmap.org` solo es apto para desarrollo; hay que migrar a un servidor de tiles propio antes de producción (ARCHITECTURE §10).

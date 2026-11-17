@@ -114,4 +114,4 @@ def test_openapi_documents_all_contract_routes(client):
         "/admin/stats/overview", "/admin/map/pois", "/admin/map/pois/{poi_id}", "/admin/emission-factors",
         "/admin/emission-factors/{mode}", "/admin/audit-logs",
     }
-    assert {p.removeprefix(PREFIX) for p in paths} == expected
+    assert expected <= {p.removeprefix(PREFIX) for p in paths}

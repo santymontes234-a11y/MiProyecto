@@ -6,7 +6,8 @@ def test_get_and_update_profile(client):
     h = auth_header(tokens)
     r = client.get(f"{PREFIX}/users/me", headers=h)
     assert r.status_code == 200
-    assert set(r.json()) == {"id", "email", "full_name", "role", "is_active", "created_at"}
+    assert set(r.json()) == {"id", "email", "full_name", "role", "is_active", "created_at",
+                                "email_verified", "ranking_opt_in"}
 
     r = client.patch(f"{PREFIX}/users/me", headers=h, json={"full_name": "  Ana   L. "})
     assert r.status_code == 200 and r.json()["full_name"] == "Ana L."

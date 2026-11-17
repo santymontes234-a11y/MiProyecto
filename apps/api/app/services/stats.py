@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.models import Granularity, Trip, TripStatus
 
-CITY_MIN_TRIPS = 10  # k-anonimato básico del contrato §6
+CITY_MIN_TRIPS = 10
+TZ = "America/Mexico_City"  # k-anonimato básico del contrato §6
 
 
 def _conds(user_id: uuid.UUID | None, date_from: datetime | None, date_to: datetime | None) -> list[ColumnElement[bool]]:
@@ -79,8 +80,9 @@ def city_summary(db: Session, date_from: datetime | None, date_to: datetime | No
 def timeseries(
     db: Session, user_id: uuid.UUID, granularity: Granularity, date_from: datetime, date_to: datetime
 ) -> dict[str, Any]:
-    # date_trunc en UTC: el contrato expresa period_start en UTC.
-    period = func.date_trunc(granularity.value, func.timezone("UTC", Trip.started_at)).label("period")
+    # Periodos cortados en America/Mexico_City (contrato §0) y devueltos como instantes UTC.
+    local = func.date_trunc(granularity.value, func.timezone(TZ, Trip.started_at))
+    period = func.timezone(TZ, local).label("period")
     rows = db.execute(
         select(
             period,

@@ -5,7 +5,8 @@
 #   - Web (next start, requiere `next build` previo) en 127.0.0.1:$QA_WEB_PORT
 # Todos los secretos son aleatorios y solo existen durante la ejecución. Nunca usa .env real.
 #
-# Uso:  tests/e2e/run-local.sh [api|web|all] [args extra de pytest]
+# Uso:  tests/e2e/run-local.sh [api|web|all|evidence] [args extra de pytest]
+#   evidence: regenera las capturas y la verificación SQL de docs/report/evidencias/
 #   E2E_RUN_RATE_LIMIT=1 tests/e2e/run-local.sh api -k rate_limit
 set -euo pipefail
 
@@ -54,7 +55,14 @@ for _ in $(seq 1 60); do docker exec "$CONTAINER" pg_isready -U qa -d qa >/dev/n
 sleep 2
 
 echo "› Migraciones (upgrade head)"
-(cd "$ROOT/apps/api" && .venv/bin/alembic upgrade head >"$WORK/alembic.log" 2>&1) || { cat "$WORK/alembic.log"; exit 1; }
+# La imagen de PostGIS reinicia el servidor tras el initdb: pg_isready puede dar un falso positivo.
+ok=0
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  if (cd "$ROOT/apps/api" && .venv/bin/alembic upgrade head >"$WORK/alembic.log" 2>&1); then ok=1; break; fi
+  grep -q "OperationalError" "$WORK/alembic.log" || break
+  sleep 2
+done
+[ "$ok" = 1 ] || { cat "$WORK/alembic.log"; exit 1; }
 
 echo "› API en :$QA_API_PORT"
 (cd "$ROOT/apps/api" && exec setsid .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port "$QA_API_PORT" --no-server-header) \
@@ -69,7 +77,12 @@ if [ "$MODE" = "api" ] || [ "$MODE" = "all" ]; then
   "$VENV/bin/pytest" -c "$ROOT/tests/e2e/api/pytest.ini" "$ROOT/tests/e2e/api" -p no:cacheprovider -q "$@" || STATUS=1
 fi
 
-if [ "$MODE" = "web" ] || [ "$MODE" = "all" ]; then
+if [ "$MODE" = "evidence" ]; then
+  export E2E_EVIDENCE_DIR="$ROOT/docs/report/evidencias"
+  export E2E_DB_CONTAINER="$CONTAINER"
+fi
+
+if [ "$MODE" = "web" ] || [ "$MODE" = "all" ] || [ "$MODE" = "evidence" ]; then
   echo "› Web en :$QA_WEB_PORT (next start)"
   [ -d "$ROOT/apps/web/.next" ] || { echo "Falta 'next build' en apps/web" >&2; exit 1; }
   (cd "$ROOT/apps/web" && API_INTERNAL_BASE_URL="$E2E_API_BASE_URL" NEXT_PUBLIC_API_BASE_URL="$E2E_API_BASE_URL" \
@@ -78,7 +91,11 @@ if [ "$MODE" = "web" ] || [ "$MODE" = "all" ]; then
   wait_http "$E2E_WEB_URL/"
   echo "› Batería web (tests/e2e/web, Playwright)"
   (cd "$ROOT/tests/e2e/web" && [ -d node_modules ] || npm install --no-audit --no-fund >/dev/null)
-  (cd "$ROOT/tests/e2e/web" && npx playwright test) || STATUS=1
+  if [ "$MODE" = "evidence" ]; then
+    (cd "$ROOT/tests/e2e/web" && npx playwright test specs/evidencias.spec.ts) || STATUS=1
+  else
+    (cd "$ROOT/tests/e2e/web" && npx playwright test) || STATUS=1
+  fi
 fi
 
 if [ "$STATUS" -ne 0 ]; then

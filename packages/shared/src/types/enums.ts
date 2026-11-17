@@ -71,6 +71,10 @@ export type ReportFormat = (typeof REPORT_FORMATS)[number];
 export const ANALYTICS_DATASETS = ['official', 'demo'] as const;
 export type AnalyticsDataset = (typeof ANALYTICS_DATASETS)[number];
 
+/** 1.2 — tipo de vehículo para CAR y CARPOOL (contrato §4.3). */
+export const VEHICLE_TYPES = ['COMPACT', 'SEDAN', 'SUV', 'PICKUP', 'MINIVAN', 'HYBRID', 'ELECTRIC'] as const;
+export type VehicleType = (typeof VEHICLE_TYPES)[number];
+
 export const RANKING_PERIODS = ['week', 'month', 'all'] as const;
 export type RankingPeriod = (typeof RANKING_PERIODS)[number];
 

@@ -9,10 +9,10 @@ const nf = new Intl.NumberFormat(LOCALE);
 const compact = new Intl.NumberFormat(LOCALE, { notation: "compact", maximumFractionDigits: 1 });
 const dtf = new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium", timeStyle: "short", timeZone: TZ });
 const df = new Intl.DateTimeFormat(LOCALE, { dateStyle: "medium", timeZone: TZ });
-// Los periodos de las series (period_start) son límites de cubeta en UTC: se formatean en UTC
-// para no mostrar el día anterior por el desfase de America/Mexico_City.
-const dayMonth = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", timeZone: "UTC" });
-const monthYear = new Intl.DateTimeFormat(LOCALE, { month: "short", year: "2-digit", timeZone: "UTC" });
+// Contrato 1.1 §0: los periodos se cortan en America/Mexico_City (devueltos en UTC), así que
+// se etiquetan en esa zona horaria.
+const dayMonth = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", timeZone: TZ });
+const monthYear = new Intl.DateTimeFormat(LOCALE, { month: "short", year: "2-digit", timeZone: TZ });
 
 export const formatNumber = (n: number | null | undefined): string => (n == null ? "—" : nf.format(n));
 export const formatCompact = (n: number | null | undefined): string => (n == null ? "—" : compact.format(n));
@@ -56,4 +56,17 @@ export function daysAgoIso(days: number, now: Date = new Date()): string {
 export function dateInputToIso(value: string, endOfDay = false): string | undefined {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
   return `${value}T${endOfDay ? "23:59:59" : "00:00:00"}Z`;
+}
+
+/** Valor para <input type="datetime-local"> en la hora local del navegador. */
+export function toDateTimeLocal(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/** De <input type="datetime-local"> (hora local) a ISO UTC; undefined si no es válida. */
+export function dateTimeLocalToIso(value: string): string | undefined {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }

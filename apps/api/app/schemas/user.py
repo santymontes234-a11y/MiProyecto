@@ -1,10 +1,10 @@
 import re
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field
 
-from app.models.enums import Role
+from app.models.enums import Role, TransportMode, VehicleType
 from app.schemas.common import InputModel, OutputModel, UtcDatetime
 
 
@@ -25,10 +25,33 @@ class UserOut(OutputModel):
     role: Role
     is_active: bool
     created_at: UtcDatetime
+    email_verified: bool = False
+    ranking_opt_in: bool = False
 
 
 class UserUpdate(InputModel):
     full_name: FullName | None = None
+    ranking_opt_in: bool | None = None
+
+
+class Preferences(InputModel):
+    language: Literal["es", "en"] = "es"
+    default_mode: TransportMode | None = None
+    weekly_goal_trips: int | None = Field(None, ge=1, le=100)
+    email_notifications: bool = True
+    default_vehicle_type: VehicleType | None = None
+
+
+class PreferencesOut(OutputModel):
+    language: str
+    default_mode: TransportMode | None
+    weekly_goal_trips: int | None
+    email_notifications: bool
+    default_vehicle_type: VehicleType | None
+
+
+class AccountDelete(InputModel):
+    password: str = Field(min_length=1, max_length=128)
 
 
 class PasswordChange(InputModel):

@@ -12,6 +12,7 @@ export const StorageKeys = {
   onboardingDone: 'ecomove.onboarding_done',
   themePreference: 'ecomove.theme_preference',
   notificationPrefs: 'ecomove.notification_prefs',
+  recentPlaces: 'ecomove.recent_places',
 } as const;
 
 export type StorageKey = (typeof StorageKeys)[keyof typeof StorageKeys];

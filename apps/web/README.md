@@ -21,7 +21,7 @@ muestran «—» y avisos, y el login informa de que no hay conexión.
 
 | Regla | Dónde |
 |---|---|
-| Solo consume la API del contrato 1.0.0, nunca PostgreSQL | `src/lib/api.ts` (`createApiClient` de `@ecomove/shared`) |
+| Solo consume la API del contrato 1.2.0, nunca PostgreSQL | `src/lib/api.ts` (`createApiClient` de `@ecomove/shared`) |
 | Tipos, `ApiError`, formateadores de CO₂/distancia/duración, etiquetas y tokens salen de `@ecomove/shared` | sin redeclarar en la web |
 | Tokens (ADR-003): access en memoria; refresh en cookie `HttpOnly` gestionada por el BFF | `src/lib/session.ts`, `src/lib/bff.ts`, `src/app/api/session/*` |
 | Rutas privadas: el proxy redirige sin sesión; el rol sale del `User` de la API, nunca del almacenamiento | `src/proxy.ts`, `src/components/auth/SessionProvider.tsx` |
@@ -57,14 +57,12 @@ src/
 tests/               Vitest + Testing Library
 ```
 
-## Funciones pendientes de contrato
+## Contrato 1.2
 
-Estas secciones se ven como «pendiente de contrato» (sin datos simulados) hasta que la 1.1.0
-publique sus endpoints: logros y ranking (`mobile-gamification`); viajes admin y zonas
-(`backend-account-features`); series de ciudad, horas pico, zonas, rutas frecuentes y mapa de
-calor (`geo-analytics`); reportes ciudadanos, evolución de usuarios, indicadores de
-infraestructura y exportación PDF en el servidor (`web-admin-analytics`). Todas están en
-`docs/proposals/`.
+- Mapa base CARTO Voyager / Dark Matter (datos OSM) con la misma URL que Android (`src/components/map/tiles.ts`).
+- Búsqueda de lugares con `api.geocode.search` (`PlaceSearch`): mapa público, registro de viajes y panel de estaciones.
+- Tipo de auto y ocupantes (CAR/CARPOOL) en registro, edición y estimación de viajes; preferencia `default_vehicle_type`.
+- Registrar viaje: `/app/viajes/nuevo` (`/routes` + `POST /trips` con `source = PLANNED`); edición con `PATCH /trips/{id}`.
 
-La exportación CSV se genera en el navegador a partir de los endpoints paginados (con protección
-contra inyección de fórmulas) y el PDF se obtiene con la vista de impresión.
+La exportación CSV personal se genera en el navegador (con protección contra inyección de fórmulas);
+los informes oficiales CSV/PDF los genera el servidor (`/admin/informes`).

@@ -85,11 +85,13 @@ def modes(db: Session, f: AnalyticsFilters) -> list[dict[str, Any]]:
 
 
 def peak_hours(db: Session, f: AnalyticsFilters, by_weekday: bool) -> dict[str, Any]:
-    group = "hour, weekday" if by_weekday else "hour"
+    # mv_daily_stats guarda ISODOW (1 = lunes … 7 = domingo); el contrato usa 0 = domingo … 6.
+    group = "hour, (weekday % 7)" if by_weekday else "hour"
+    cols = "hour, (weekday % 7)::int AS weekday" if by_weekday else "hour"
     rows = _rows(
         db,
         f"""
-        SELECT {group}, sum(trips_count)::bigint AS trips_count,
+        SELECT {cols}, sum(trips_count)::bigint AS trips_count,
                COALESCE(sum(co2_saved_g), 0) AS co2_saved_g
         FROM geo.mv_daily_stats
         WHERE is_demo = :demo

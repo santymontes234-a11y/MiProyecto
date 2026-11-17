@@ -1,22 +1,25 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { formatDistance, type Position } from '@ecomove/shared';
+import { ApiError, formatDistance, map as mapTokens, type Place as ApiPlace, type Position } from '@ecomove/shared';
 import { router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { ActivityIndicator, Keyboard, Linking, Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EcoMap } from '@/components/map/EcoMap';
 import type { MapLine, MapMarker } from '@/components/map/map-protocol';
 import { AppText, Button, useToast } from '@/components/ui';
 import { useInfrastructure } from '@/features/map/useInfrastructure';
+import { placeFromApi, usePlaceSearch, useRecentPlaces } from '@/features/places/usePlaceSearch';
 import { useTripDraft, type Place } from '@/features/trips/TripDraftProvider';
+import { useRoute } from '@/features/trips/useTrips';
+import { errorCode, getErrorMessage } from '@/lib/errors';
 import { formatCoord, haversineM } from '@/lib/geo';
 import { ensureForegroundPermission, getCurrentPosition } from '@/lib/location';
 import { useTheme } from '@/theme/ThemeProvider';
 
 type Target = 'origin' | 'destination';
 
-/** Pantalla 8 — Selección de origen y destino tocando el mapa. */
+/** Pantalla 8 — Origen y destino: búsqueda por texto (O2, GET /geocode) o tocando el mapa. */
 export default function PlanScreen() {
   const { colors, spacing, radius, elevation } = useTheme();
   const toast = useToast();
@@ -24,6 +27,17 @@ export default function PlanScreen() {
   const infra = useInfrastructure([]);
   const [target, setTarget] = useState<Target>(draft.origin ? 'destination' : 'origin');
   const [locating, setLocating] = useState(false);
+  const [focused, setFocused] = useState<Target | null>(null);
+  const [query, setQuery] = useState('');
+  const recentPlaces = useRecentPlaces();
+  const near = draft.origin?.coord ?? draft.destination?.coord ?? mapTokens.defaultCenter;
+  const search = usePlaceSearch(focused ? query : '', near);
+
+  const closeSearch = useCallback(() => {
+    Keyboard.dismiss();
+    setFocused(null);
+    setQuery('');
+  }, []);
 
   const assign = useCallback(
     (which: Target, place: Place) => {
@@ -37,11 +51,21 @@ export default function PlanScreen() {
     [draft],
   );
 
+  const choose = useCallback(
+    (which: Target, place: Place, remember = true) => {
+      assign(which, place);
+      if (remember) recentPlaces.remember(place);
+      closeSearch();
+    },
+    [assign, closeSearch, recentPlaces],
+  );
+
   const onTap = useCallback(
     (coord: Position) => {
       assign(target, { coord, label: `Punto en el mapa (${formatCoord(coord)})` });
+      closeSearch();
     },
-    [assign, target],
+    [assign, target, closeSearch],
   );
 
   const pickMyLocation = async () => {
@@ -59,6 +83,7 @@ export default function PlanScreen() {
         return;
       }
       assign('origin', { coord: pos, label: 'Mi ubicación' });
+      closeSearch();
     } catch {
       toast.error('No pudimos obtener tu ubicación.');
     } finally {
@@ -73,13 +98,13 @@ export default function PlanScreen() {
     return m;
   }, [draft.origin, draft.destination]);
 
-  const line = useMemo<MapLine[]>(
-    () =>
-      draft.origin && draft.destination
-        ? [{ id: 'plan', coords: [draft.origin.coord, draft.destination.coord], color: colors.info, weight: 5, dashed: true }]
-        : [],
-    [draft.origin, draft.destination, colors.info],
-  );
+  // Ruta real de previsualización (perfil bicicleta). Si el ruteo no está disponible: línea recta.
+  const preview = useRoute(draft.origin?.coord ?? null, draft.destination?.coord ?? null, 'BICYCLE');
+  const line = useMemo<MapLine[]>(() => {
+    if (!draft.origin || !draft.destination) return [];
+    if (preview.data) return [{ id: 'plan', coords: preview.data.route.coordinates, color: colors.info, weight: 5 }];
+    return [{ id: 'plan', coords: [draft.origin.coord, draft.destination.coord], color: colors.info, weight: 5, dashed: true }];
+  }, [draft.origin, draft.destination, colors.info, preview.data]);
 
   const fitTo = useMemo(() => (draft.origin && draft.destination ? [draft.origin.coord, draft.destination.coord] : null), [draft.origin, draft.destination]);
 
@@ -99,7 +124,19 @@ export default function PlanScreen() {
       />
 
       <View style={[styles.panel, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, margin: spacing.lg, ...elevation.card }]}>
-        <PlaceRow which="origin" active={target === 'origin'} place={draft.origin} onPress={() => setTarget('origin')} />
+        <PlaceRow
+          which="origin"
+          active={target === 'origin'}
+          place={draft.origin}
+          editing={focused === 'origin'}
+          query={query}
+          onQuery={setQuery}
+          onFocus={() => {
+            setTarget('origin');
+            setFocused('origin');
+            setQuery('');
+          }}
+        />
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 40 }} />
           <Pressable
@@ -112,29 +149,64 @@ export default function PlanScreen() {
             <Ionicons name="swap-vertical" size={20} color={colors.textMuted} />
           </Pressable>
         </View>
-        <PlaceRow which="destination" active={target === 'destination'} place={draft.destination} onPress={() => setTarget('destination')} />
-        <Pressable
-          onPress={() => void pickMyLocation()}
-          accessibilityRole="button"
-          accessibilityLabel="Usar mi ubicación como origen"
-          style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, minHeight: 40 }}
-        >
-          {locating ? <ActivityIndicator color={colors.primary} /> : <Ionicons name="locate" size={18} color={colors.primaryText} />}
-          <AppText variant="label" tone="primary" style={{ marginLeft: spacing.sm }}>
-            Usar mi ubicación como origen
-          </AppText>
-        </Pressable>
+        <PlaceRow
+          which="destination"
+          active={target === 'destination'}
+          place={draft.destination}
+          editing={focused === 'destination'}
+          query={query}
+          onQuery={setQuery}
+          onFocus={() => {
+            setTarget('destination');
+            setFocused('destination');
+            setQuery('');
+          }}
+        />
+        {focused ? (
+          <SearchResults
+            target={focused}
+            query={query}
+            search={search}
+            recents={recentPlaces.recents}
+            locating={locating}
+            onMyLocation={() => void pickMyLocation()}
+            onPick={(p, remember) => choose(focused, p, remember)}
+            onClose={closeSearch}
+          />
+        ) : (
+          <Pressable
+            onPress={() => void pickMyLocation()}
+            accessibilityRole="button"
+            accessibilityLabel="Usar mi ubicación como origen"
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, minHeight: 40 }}
+          >
+            {locating ? <ActivityIndicator color={colors.primary} /> : <Ionicons name="locate" size={18} color={colors.primaryText} />}
+            <AppText variant="label" tone="primary" style={{ marginLeft: spacing.sm }}>
+              Usar mi ubicación como origen
+            </AppText>
+          </Pressable>
+        )}
       </View>
 
       <SafeAreaView edges={['bottom']} style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <View style={{ padding: spacing.lg }}>
-          {straightM !== null ? (
+          {preview.data ? (
             <AppText variant="caption" tone="muted" align="center" style={{ marginBottom: spacing.sm }}>
-              Distancia aproximada en línea recta: {formatDistance(straightM)}
+              Ruta en bici: {formatDistance(preview.data.distance_m)}
+            </AppText>
+          ) : preview.isFetching ? (
+            <AppText variant="caption" tone="muted" align="center" style={{ marginBottom: spacing.sm }}>
+              Calculando ruta…
+            </AppText>
+          ) : straightM !== null ? (
+            <AppText variant="caption" tone="muted" align="center" style={{ marginBottom: spacing.sm }}>
+              {errorCode(preview.error) === 'TRIP_OUTSIDE_SERVICE_AREA'
+                ? 'Uno de los puntos está fuera del área de servicio de Querétaro.'
+                : `Distancia aproximada en línea recta: ${formatDistance(straightM)}`}
             </AppText>
           ) : (
             <AppText variant="caption" tone="muted" align="center" style={{ marginBottom: spacing.sm }}>
-              Toca el mapa para colocar el {target === 'origin' ? 'origen (A)' : 'destino (B)'}.
+              Busca un lugar o toca el mapa para colocar el {target === 'origin' ? 'origen (A)' : 'destino (B)'}.
             </AppText>
           )}
           {tooShort ? (
@@ -142,27 +214,36 @@ export default function PlanScreen() {
               El origen y el destino están demasiado cerca.
             </AppText>
           ) : null}
-          <Button label="Elegir transporte" icon="arrow-forward" disabled={!draft.origin || !draft.destination || tooShort} onPress={() => router.push('/trip/mode')} />
+          <Button label="Elegir transporte" icon="arrow-forward" disabled={!draft.origin || !draft.destination || tooShort || errorCode(preview.error) === 'TRIP_OUTSIDE_SERVICE_AREA'} onPress={() => router.push('/trip/mode')} />
         </View>
       </SafeAreaView>
     </View>
   );
 }
 
-function PlaceRow({ which, place, active, onPress }: { which: Target; place: Place | null; active: boolean; onPress: () => void }) {
-  const { colors, spacing, radius } = useTheme();
+interface PlaceRowProps {
+  which: Target;
+  place: Place | null;
+  active: boolean;
+  editing: boolean;
+  query: string;
+  onQuery: (q: string) => void;
+  onFocus: () => void;
+}
+
+function PlaceRow({ which, place, active, editing, query, onQuery, onFocus }: PlaceRowProps) {
+  const { colors, spacing, radius, typography } = useTheme();
+  const inputRef = useRef<TextInputInstance>(null);
   const color = which === 'origin' ? colors.primary : colors.info;
   const title = which === 'origin' ? 'Origen' : 'Destino';
   return (
     <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      accessibilityLabel={`${title}: ${place?.label ?? 'sin seleccionar'}. ${active ? 'Seleccionado para colocar en el mapa' : 'Toca para seleccionarlo'}`}
+      onPress={() => inputRef.current?.focus()}
+      accessible={false}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: spacing.sm,
+        paddingVertical: spacing.xs,
         paddingHorizontal: spacing.sm,
         borderRadius: radius.md,
         backgroundColor: active ? colors.primarySoft : 'transparent',
@@ -177,11 +258,135 @@ function PlaceRow({ which, place, active, onPress }: { which: Target; place: Pla
         <AppText variant="overline" tone="muted">
           {title.toUpperCase()}
         </AppText>
-        <AppText variant="body" numberOfLines={1} tone={place ? 'default' : 'muted'}>
-          {place?.label ?? (active ? 'Toca el mapa…' : 'Sin seleccionar')}
-        </AppText>
+        <TextInput
+          ref={inputRef}
+          value={editing ? query : (place?.label ?? '')}
+          onChangeText={onQuery}
+          onFocus={onFocus}
+          placeholder={editing ? 'Escribe un lugar, p. ej. «UPQ»' : 'Busca un lugar o toca el mapa'}
+          placeholderTextColor={colors.textMuted}
+          accessibilityLabel={`${title}: ${place?.label ?? 'sin seleccionar'}. Escribe para buscar un lugar`}
+          autoCorrect={false}
+          returnKeyType="search"
+          maxLength={120}
+          numberOfLines={1}
+          style={[typography.body, { color: colors.text, paddingVertical: 2, minHeight: 32 }]}
+        />
       </View>
     </Pressable>
+  );
+}
+
+interface SearchResultsProps {
+  target: Target;
+  query: string;
+  search: ReturnType<typeof usePlaceSearch>;
+  recents: Place[];
+  locating: boolean;
+  onMyLocation: () => void;
+  onPick: (p: Place, remember: boolean) => void;
+  onClose: () => void;
+}
+
+const CATEGORY_ICON: Record<string, ComponentProps<typeof Ionicons>['name']> = {
+  BUS_STOP: 'bus',
+  BIKE_PARKING: 'bicycle',
+  BIKE_SHARING: 'bicycle',
+  university: 'school',
+  school: 'school',
+  hospital: 'medkit',
+};
+
+function searchErrorMessage(e: unknown): string {
+  // 404: el backend aún no publica /geocode (contrato 1.2). Se sigue pudiendo tocar el mapa.
+  if (e instanceof ApiError && e.status === 404) return 'La búsqueda de lugares aún no está disponible. Toca el mapa para elegir el punto.';
+  return getErrorMessage(e);
+}
+
+function SearchResults({ target, query, search, recents, locating, onMyLocation, onPick, onClose }: SearchResultsProps) {
+  const { colors, spacing } = useTheme();
+  const short = query.trim().length < 2;
+
+  const row = (key: string, icon: ComponentProps<typeof Ionicons>['name'], title: string, subtitle: string | null, onPress: () => void) => (
+    <Pressable
+      key={key}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: spacing.sm, opacity: pressed ? 0.6 : 1 })}
+    >
+      <Ionicons name={icon} size={20} color={colors.textMuted} />
+      <View style={{ flex: 1, marginLeft: spacing.md }}>
+        <AppText variant="body" numberOfLines={1}>
+          {title}
+        </AppText>
+        {subtitle ? (
+          <AppText variant="caption" tone="muted" numberOfLines={1}>
+            {subtitle}
+          </AppText>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+
+  let body: ReactNode;
+  if (short) {
+    body = (
+      <>
+        {target === 'origin'
+          ? row('me', 'locate', locating ? 'Obteniendo ubicación…' : 'Usar mi ubicación', null, onMyLocation)
+          : null}
+        {recents.length ? (
+          <AppText variant="overline" tone="muted" style={{ marginTop: spacing.sm, marginLeft: spacing.sm }}>
+            BÚSQUEDAS RECIENTES
+          </AppText>
+        ) : null}
+        {recents.map((p, i) => row(`r${i}`, 'time-outline', p.label, null, () => onPick(p, true)))}
+        {!recents.length && target === 'destination' ? (
+          <AppText variant="caption" tone="muted" style={{ padding: spacing.sm }}>
+            Escribe al menos 2 letras o toca el mapa.
+          </AppText>
+        ) : null}
+      </>
+    );
+  } else if (search.isError) {
+    body = (
+      <AppText variant="caption" tone="danger" style={{ padding: spacing.sm }}>
+        {searchErrorMessage(search.error)}
+      </AppText>
+    );
+  } else if (search.debouncing || search.isFetching) {
+    body = (
+      <View style={{ flexDirection: 'row', alignItems: 'center', padding: spacing.sm }}>
+        <ActivityIndicator color={colors.primary} />
+        <AppText variant="caption" tone="muted" style={{ marginLeft: spacing.sm }}>
+          Buscando…
+        </AppText>
+      </View>
+    );
+  } else if (!search.items.length) {
+    body = (
+      <AppText variant="caption" tone="muted" style={{ padding: spacing.sm }}>
+        Sin resultados para «{query.trim()}». Prueba otro nombre o toca el mapa.
+      </AppText>
+    );
+  } else {
+    body = search.items.map((p: ApiPlace, i) =>
+      row(`s${i}`, (p.category && CATEGORY_ICON[p.category]) || (p.source === 'poi' ? 'leaf' : 'location'), p.name, p.label !== p.name ? p.label : null, () => onPick(placeFromApi(p), true)),
+    );
+  }
+
+  return (
+    <View style={{ marginTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+      <ScrollView style={{ maxHeight: 280 }} keyboardShouldPersistTaps="handled">
+        {body}
+      </ScrollView>
+      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Cerrar búsqueda y elegir en el mapa" style={{ alignSelf: 'flex-end', padding: spacing.sm }}>
+        <AppText variant="label" tone="primary">
+          Elegir en el mapa
+        </AppText>
+      </Pressable>
+    </View>
   );
 }
 

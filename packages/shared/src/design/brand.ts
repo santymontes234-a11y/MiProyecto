@@ -1,0 +1,11 @@
+/** Identidad del proyecto (docs/DESIGN_SYSTEM.md §0). Fuente única de nombre, eslogan y logo. */
+export const BRAND = {
+  name: 'EcoMove Querétaro',
+  shortName: 'EcoMove',
+  slogan: 'Cada viaje cuenta.',
+  tagline: 'Movilidad sostenible medida en CO₂ evitado.',
+} as const;
+
+/** Logo oficial (hoja + trayecto). Original en docs/brand/logo.svg. viewBox 0 0 32 32. */
+export const LOGO_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="#16A34A"/><path d="M9 21c0-6.5 5-11 14-11-1 8.5-5.5 13-11.5 13-.9 0-1.7-.1-2.5-.4" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 23.5c2.5-4 5.5-6.5 9-8" fill="none" stroke="#DCFCE7" stroke-width="2.2" stroke-linecap="round"/></svg>';

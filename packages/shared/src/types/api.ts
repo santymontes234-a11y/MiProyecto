@@ -3,7 +3,7 @@
  * Espejo de apps/api/app/schemas/*.py — cualquier cambio requiere propuesta (AGENTS.md §4).
  * Las propiedades conservan snake_case tal como viajan en JSON.
  */
-import type { Granularity, PoiCategory, Role, TransportMode, TripSource, TripStatus } from './enums';
+import type { Granularity, PoiCategory, Role, TransportMode, TripSource, TripStatus, VehicleType } from './enums';
 import type { Feature, FeatureCollection, LineStringGeometry, PointGeometry } from './geojson';
 
 export type ISODateTime = string;
@@ -89,6 +89,10 @@ export interface TripEstimateRequest {
   mode: TransportMode;
   route?: LineStringGeometry | null;
   distance_m?: number | null;
+  /** 1.2 — solo CAR y CARPOOL (§4.3) */
+  vehicle_type?: VehicleType | null;
+  /** 1.2 — 1..8, solo CAR y CARPOOL (§4.3) */
+  occupants?: number | null;
 }
 
 export interface TripEstimate {
@@ -99,6 +103,10 @@ export interface TripEstimate {
   emission_factor_g_per_km: number;
   /** 1.1 */
   points_estimate: number;
+  /** 1.2 — null si el medio no es CAR/CARPOOL */
+  vehicle_type: VehicleType | null;
+  /** 1.2 — null si el medio no es CAR/CARPOOL */
+  occupants: number | null;
 }
 
 export interface TripCreate {
@@ -111,6 +119,10 @@ export interface TripCreate {
   source?: TripSource;
   /** 1.1 — obligatorio si y solo si source = 'PLANNED' (devuelto por /routes) */
   route_token?: string;
+  /** 1.2 — solo CAR y CARPOOL (§4.3) */
+  vehicle_type?: VehicleType | null;
+  /** 1.2 — 1..8, solo CAR y CARPOOL (§4.3) */
+  occupants?: number | null;
 }
 
 export interface TripSummary {
@@ -127,6 +139,10 @@ export interface TripSummary {
   source: TripSource;
   /** 1.1 */
   recurrence_id: UUID | null;
+  /** 1.2 — null si el medio no es CAR/CARPOOL */
+  vehicle_type: VehicleType | null;
+  /** 1.2 — null si el medio no es CAR/CARPOOL */
+  occupants: number | null;
   /** 1.1 */
   points: number;
 }

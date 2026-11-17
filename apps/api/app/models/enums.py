@@ -40,3 +40,87 @@ class Granularity(StrEnum):
     DAY = "day"
     WEEK = "week"
     MONTH = "month"
+
+
+# --- Contrato 1.1.0 -----------------------------------------------------------------------------
+
+
+class TripSource(StrEnum):
+    GPS = "GPS"
+    PLANNED = "PLANNED"
+
+
+class ZoneKind(StrEnum):
+    COLONIA = "colonia"
+    AGEB = "ageb"
+    MUNICIPIO = "municipio"
+    DISTRITO = "distrito"
+    CUSTOM = "custom"
+
+
+class AchievementCriterion(StrEnum):
+    TRIPS_COUNT = "TRIPS_COUNT"
+    DISTANCE_M = "DISTANCE_M"
+    CO2_SAVED_G = "CO2_SAVED_G"
+    DISTINCT_MODES = "DISTINCT_MODES"
+
+
+class NotificationType(StrEnum):
+    ACHIEVEMENT_UNLOCKED = "ACHIEVEMENT_UNLOCKED"
+    WEEKLY_SUMMARY = "WEEKLY_SUMMARY"
+    SYSTEM = "SYSTEM"
+
+
+class CitizenReportCategory(StrEnum):
+    BIKE_LANE_DAMAGE = "BIKE_LANE_DAMAGE"
+    MISSING_INFRASTRUCTURE = "MISSING_INFRASTRUCTURE"
+    SAFETY = "SAFETY"
+    POI_ISSUE = "POI_ISSUE"
+    OTHER = "OTHER"
+
+
+class CitizenReportStatus(StrEnum):
+    OPEN = "OPEN"
+    IN_REVIEW = "IN_REVIEW"
+    RESOLVED = "RESOLVED"
+    REJECTED = "REJECTED"
+
+
+class ReportType(StrEnum):
+    OVERVIEW = "overview"
+    TRIPS = "trips"
+    USERS = "users"
+    CO2_BY_MODE = "co2_by_mode"
+    CO2_BY_ZONE = "co2_by_zone"
+    ANALYTICS_TIMESERIES = "analytics_timeseries"
+    CITIZEN_REPORTS = "citizen_reports"
+    AUDIT_LOGS = "audit_logs"
+
+
+class ReportFormat(StrEnum):
+    CSV = "csv"
+    PDF = "pdf"
+
+
+class RankingPeriod(StrEnum):
+    WEEK = "week"
+    MONTH = "month"
+    ALL = "all"
+
+
+class TokenPurpose(StrEnum):
+    PASSWORD_RESET = "PASSWORD_RESET"
+    EMAIL_VERIFICATION = "EMAIL_VERIFICATION"
+
+
+# --- Contrato 1.2.0 -----------------------------------------------------------------------------
+
+
+class VehicleType(StrEnum):
+    COMPACT = "COMPACT"
+    SEDAN = "SEDAN"
+    SUV = "SUV"
+    PICKUP = "PICKUP"
+    MINIVAN = "MINIVAN"
+    HYBRID = "HYBRID"
+    ELECTRIC = "ELECTRIC"

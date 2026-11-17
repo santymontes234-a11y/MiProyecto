@@ -2,11 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
-import { AppText, FadeIn } from '@/components/ui';
+import { AppText, BrandLogo, FadeIn } from '@/components/ui';
 import { useTheme } from '@/theme/ThemeProvider';
 
 export function AuthHeader({ title, subtitle, back = false }: { title: string; subtitle: string; back?: boolean }) {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   return (
     <View style={{ marginBottom: spacing.xl }}>
       {back ? (
@@ -21,8 +21,8 @@ export function AuthHeader({ title, subtitle, back = false }: { title: string; s
         </Pressable>
       ) : null}
       <FadeIn>
-        <View style={{ width: 56, height: 56, borderRadius: radius.lg, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg }}>
-          <Ionicons name="leaf" size={30} color={colors.primary} />
+        <View style={{ marginBottom: spacing.lg }}>
+          <BrandLogo size={56} />
         </View>
         <AppText variant="title">{title}</AppText>
         <AppText tone="muted" style={{ marginTop: spacing.xs }}>

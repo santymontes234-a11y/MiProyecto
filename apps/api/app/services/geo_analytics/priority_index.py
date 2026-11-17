@@ -431,9 +431,11 @@ def score_cells(
                 "geometry": r.get("geometry"),
                 "score": None if score is None else round(score, 1),
                 "label": label,
-                "confidence": conf,
+                # Contrato §13: confianza 0..1 = usuarios distintos / umbral de confianza alta
+                "confidence": round(min(1.0, users / max(cfg.confidence_users[1], 1)), 3),
+                "confidence_level": conf,
                 "sample": {"users": users, "trip_ends": ends},
-                "demand_share": None if not score else round(demand_contrib / score, 3),
+                "demand_share": 0.0 if not score else round(demand_contrib / score, 3),
                 "components": comps,
                 "explanation": _explain(label, conf, comps, users),
             }

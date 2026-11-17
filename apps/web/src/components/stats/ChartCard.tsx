@@ -14,7 +14,7 @@ export interface TableSpec {
  * Envoltorio estándar de gráfica: título, acciones, estados de carga/vacío/error
  * y una vista de tabla accesible alternativa.
  */
-export function ChartCard({ title, description, actions, loading, error, onRetry, empty, table, children, height = 280, className }: {
+export function ChartCard({ title, description, actions, loading, error, onRetry, empty, table, children, height = 280, className, footer }: {
   title: string;
   description?: string;
   actions?: React.ReactNode;
@@ -26,6 +26,8 @@ export function ChartCard({ title, description, actions, loading, error, onRetry
   children: React.ReactNode;
   height?: number;
   className?: string;
+  /** Contenido bajo la gráfica (p. ej. notas de la API). */
+  footer?: React.ReactNode;
 }) {
   const [view, setView] = useState<"chart" | "table">("chart");
   const headerActions = (
@@ -48,6 +50,7 @@ export function ChartCard({ title, description, actions, loading, error, onRetry
     <Card className={className} aria-label={title}>
       <CardHeader title={title} description={description} actions={headerActions} />
       {body}
+      {footer}
     </Card>
   );
 }

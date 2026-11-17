@@ -57,6 +57,7 @@ export function TripCard({ trip, onPress }: { trip: TripSummary; onPress?: () =>
           </AppText>
           <AppText variant="caption" tone="muted">
             {formatDistance(trip.distance_m)}
+            {trip.points > 0 ? ` · +${trip.points} pts` : ''}
           </AppText>
         </View>
       </View>

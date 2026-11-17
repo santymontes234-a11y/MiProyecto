@@ -166,7 +166,9 @@ def route_overlap(
 
 def bike_lane_coverage(db: Session, f: AnalyticsFilters, buffer_m: float) -> list[dict[str, Any]]:
     return _rows(
-        db, f"SELECT * FROM geo.bike_lane_coverage(:buf, {_F})", {**f.params(), "buf": buffer_m}  # noqa: S608
+        db,
+        f"SELECT * FROM geo.bike_lane_coverage(:buf, {_F})",  # noqa: S608
+        {**f.params(), "buf": buffer_m},  # noqa: S608
     )
 
 
@@ -263,3 +265,163 @@ def priority_inputs(
     for r in rows:
         r["geometry"] = _geojson(r["geometry"])
     return rows
+
+
+# ---------------------------------------------------------------------------
+# API_CONTRACT 1.1.0 §13: viajes por zona, crecimiento de usuarios, infraestructura
+# ---------------------------------------------------------------------------
+_RELATION_SQL = {
+    "origin": "c.oi",
+    "destination": "c.di",
+    "both": "c.oi AND c.di",
+    "any": "c.oi OR c.di",
+}
+
+
+def zone_trips(
+    db: Session, zone_id: uuid.UUID, relation: str, f: AnalyticsFilters, page: int, page_size: int
+) -> tuple[list[dict[str, Any]], int]:
+    """Viajes con origen y/o destino en la zona (contrato §13: relation sin 'route')."""
+    if relation not in _RELATION_SQL:
+        raise AppError(400, "BAD_REQUEST", "relation inválida")
+    exists = db.execute(
+        text("SELECT EXISTS (SELECT 1 FROM geo.v_zones WHERE id = CAST(:z AS uuid))"),
+        {"z": str(zone_id)},
+    ).scalar_one()
+    if not exists:
+        raise AppError(404, "ZONE_NOT_FOUND", "Zona no encontrada")
+    # DEMO no tiene origen de captura: se reporta GPS (valor por defecto del contrato).
+    source = "COALESCE((SELECT p.source::text FROM public.trips p WHERE p.id = c.id), 'GPS')"
+    rows = _rows(
+        db,
+        f"""
+        WITH z AS (SELECT geom_utm FROM geo.v_zones WHERE id = CAST(:z AS uuid)),
+        c AS (
+            SELECT t.id, t.mode_code, t.started_at, t.distance_m, t.co2_saved_g,
+                   ST_Intersects(z.geom_utm, t.origin_utm) AS oi,
+                   ST_Intersects(z.geom_utm, t.destination_utm) AS di
+            FROM z, geo.trips_filtered({_F}) t
+            WHERE ST_Intersects(z.geom_utm, t.origin_utm)
+               OR ST_Intersects(z.geom_utm, t.destination_utm)
+        )
+        SELECT c.id AS trip_id, c.mode_code AS mode, {source} AS source, c.started_at,
+               c.distance_m, c.co2_saved_g,
+               CASE WHEN c.oi AND c.di THEN 'both' WHEN c.oi THEN 'origin'
+                    ELSE 'destination' END AS relation,
+               count(*) OVER () AS total_count
+        FROM c
+        WHERE {_RELATION_SQL[relation]}
+        ORDER BY c.started_at DESC, c.id DESC
+        LIMIT :lim OFFSET :off
+    """,  # noqa: S608
+        {**f.params(), "z": str(zone_id), "lim": page_size, "off": (page - 1) * page_size},
+    )  # noqa: S608 - fragmentos de lista blanca
+    total = int(rows[0]["total_count"]) if rows else 0
+    for r in rows:
+        r.pop("total_count", None)
+    return rows, total
+
+
+_STEP = {"day": "1 day", "week": "1 week", "month": "1 month"}
+
+
+def users_growth(db: Session, f: AnalyticsFilters, granularity: str) -> list[dict[str, Any]]:
+    """Altas, acumulado y activos por periodo (America/Mexico_City).
+
+    official: alta = users.created_at. demo: alta = primer viaje DEMO del usuario sintético.
+    """
+    if granularity not in _STEP:
+        raise AppError(400, "BAD_REQUEST", "granularity inválida")
+    tz = "America/Mexico_City"
+    first_seen = (
+        "SELECT user_id AS id, min(started_at) AS created_at FROM geo.demo_trips GROUP BY user_id"
+        if f.is_demo
+        else "SELECT id, created_at FROM public.users"
+    )
+    return _rows(
+        db,
+        f"""
+        WITH fs AS ({first_seen}),
+        periods AS (
+            SELECT generate_series(
+                date_trunc('{granularity}', CAST(:f AS timestamptz) AT TIME ZONE '{tz}'),
+                date_trunc('{granularity}', (CAST(:t AS timestamptz) - interval '1 microsecond')
+                                             AT TIME ZONE '{tz}'),
+                interval '{_STEP[granularity]}') AS p
+        ),
+        base AS (SELECT count(*) AS n FROM fs WHERE created_at < CAST(:f AS timestamptz)),
+        new AS (
+            SELECT date_trunc('{granularity}', created_at AT TIME ZONE '{tz}') AS p, count(*) AS n
+            FROM fs
+            WHERE created_at >= CAST(:f AS timestamptz) AND created_at < CAST(:t AS timestamptz)
+            GROUP BY 1
+        ),
+        act AS (
+            SELECT date_trunc('{granularity}', t.started_at AT TIME ZONE '{tz}') AS p,
+                   count(DISTINCT t.user_id) AS n
+            FROM geo.trips_filtered({_F}) t GROUP BY 1
+        )
+        SELECT (periods.p AT TIME ZONE '{tz}') AS period_start,
+               COALESCE(new.n, 0) AS new_users,
+               base.n + sum(COALESCE(new.n, 0)) OVER (ORDER BY periods.p) AS total_users,
+               COALESCE(act.n, 0) AS active_users
+        FROM periods CROSS JOIN base
+        LEFT JOIN new ON new.p = periods.p
+        LEFT JOIN act ON act.p = periods.p
+        ORDER BY periods.p
+    """,  # noqa: S608
+        f.params(),
+    )  # noqa: S608 - granularidad y zona horaria de lista blanca
+
+
+POI_CATEGORIES = ("BIKE_PARKING", "BIKE_SHARING", "BUS_STOP", "EV_CHARGER", "REPAIR_STATION")
+
+
+def infrastructure(db: Session, bbox: BBox, demo: bool) -> dict[str, Any]:
+    env = "ST_MakeEnvelope(:xmin, :ymin, :xmax, :ymax, 4326)"
+    if demo:
+        cats = _rows(
+            db,
+            f"""
+            SELECT CASE kind WHEN 'bus_stop' THEN 'BUS_STOP' ELSE 'BIKE_SHARING' END AS category,
+                   count(*) AS n
+            FROM geo.demo_stations WHERE geom && {env} GROUP BY 1
+        """,  # noqa: S608
+            _bbox_params(bbox),
+        )  # noqa: S608 - fragmento constante
+        inactive = 0
+        lanes_sql = f"FROM geo.demo_bike_lanes WHERE geom && {env}"
+    else:
+        cats = _rows(
+            db,
+            f"""
+            SELECT category::text AS category, count(*) AS n
+            FROM pois WHERE is_active AND location && {env} GROUP BY 1
+        """,  # noqa: S608
+            _bbox_params(bbox),
+        )  # noqa: S608 - fragmento constante
+        inactive = _rows(
+            db,
+            f"SELECT count(*) AS n FROM pois WHERE NOT is_active AND location && {env}",  # noqa: S608
+            _bbox_params(bbox),
+        )[0]["n"]
+        lanes_sql = f"FROM cycleways WHERE geom && {env}"
+    lanes = _rows(
+        db,
+        f"""
+        SELECT COALESCE(sum(ST_Length(ST_Intersection(geom, {env})::geography)), 0) AS total,
+               COALESCE(sum(ST_Length(ST_Intersection(geom, {env})::geography))
+                        FILTER (WHERE is_protected), 0) AS protected
+        {lanes_sql}
+    """,
+        _bbox_params(bbox),
+    )[0]  # noqa: S608 - fragmento constante
+    by_cat = {c: 0 for c in POI_CATEGORIES}
+    for r in cats:
+        by_cat[r["category"]] = int(r["n"])
+    return {
+        "pois_by_category": by_cat,
+        "pois_inactive": int(inactive),
+        "cycleways_length_m": round(float(lanes["total"]), 1),
+        "cycleways_protected_length_m": round(float(lanes["protected"]), 1),
+    }

@@ -35,3 +35,15 @@ describe('errors', () => {
     expect(isNetworkError(new ApiError(500, 'INTERNAL_ERROR', ''))).toBe(false);
   });
 });
+
+describe('errores del contrato 1.1.0', () => {
+  it('traduce códigos nuevos de viajes y ruteo', () => {
+    expect(getErrorMessage(new ApiError(422, 'MODE_INACTIVE', 'x', { mode: 'E_SCOOTER' }))).toMatch(/Guardamos tu viaje/);
+    expect(getErrorMessage(new ApiError(503, 'ROUTING_UNAVAILABLE', 'x'))).toMatch(/rutas/);
+    expect(getErrorMessage(new ApiError(400, 'RESET_TOKEN_INVALID', 'x'))).toMatch(/enlace/);
+  });
+  it('dominio reservado en el registro llega como error del campo email', () => {
+    const e = new ApiError(422, 'VALIDATION_ERROR', 'Datos inválidos', [{ loc: ['body', 'email'], msg: 'Dominio de correo no permitido', type: 'value_error' }]);
+    expect(fieldErrors(e)).toEqual({ email: 'Dominio de correo no permitido' });
+  });
+});

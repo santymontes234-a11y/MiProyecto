@@ -36,7 +36,9 @@ def test_poi_parsing_categories_and_attributes() -> None:
     assert park.name == "Estacionamiento de bicicletas" and park.attributes["capacity"] == 12
     assert park.attributes["source"] == "osm" and park.attributes["attribution"].startswith("©")
     stop = rows[800003]
-    assert stop.attributes["code"] == "P-17" and stop.attributes["lines"] == ["12", "45", "77"]
+    assert stop.attributes["ref"] == "P-17" and stop.attributes["lines"] == ["12", "45", "77"]
+    assert all("code" not in r.attributes for r in rows.values())  # code solo lo asigna un admin
+    assert rows[800007].attributes["ref"] == "P-17"  # ref repetido: se importan ambas paradas
     assert rows[800002].osm_type == "way" and rows[800002].lon == -100.391
     assert "capacity" not in rows[800004].attributes  # "n/a" no es número
 
@@ -72,7 +74,7 @@ def test_upsert_is_idempotent_and_keeps_admin_pois(geo_db: Any) -> None:
     first_p = oi.upsert_pois(geo_db, pois, BBOX, prune=False)
     geo_db.commit()
     assert (first_c["inserted"], first_c["updated"]) == (3, 0)
-    assert (first_p["inserted"], first_p["updated"]) == (5, 0)
+    assert (first_p["inserted"], first_p["updated"]) == (6, 0)
 
     again_c = oi.upsert_cycleways(geo_db, cyc, BBOX, prune=False)
     again_p = oi.upsert_pois(geo_db, pois, BBOX, prune=False)
@@ -80,7 +82,7 @@ def test_upsert_is_idempotent_and_keeps_admin_pois(geo_db: Any) -> None:
     assert (again_c["inserted"], again_c["updated"]) == (0, 0)
     assert (again_p["inserted"], again_p["updated"]) == (0, 0)
 
-    assert geo_db.execute(text("SELECT count(*) FROM pois")).scalar_one() == 6
+    assert geo_db.execute(text("SELECT count(*) FROM pois")).scalar_one() == 7
     admin = geo_db.execute(
         text("SELECT name, attributes FROM pois WHERE id = :i"), {"i": admin_id}
     ).one()
@@ -111,7 +113,7 @@ def test_cli_from_raw_and_dry_run(geo_db: Any, tmp_path: Path) -> None:
     for layer in ("cycleways", "pois"):
         (tmp_path / f"{layer}.json").write_text(json.dumps(SAMPLE[layer]))
     summary = oi.run(geo_db, ["cycleways", "pois"], BBOX, _args(from_raw=str(tmp_path)))
-    assert summary["pois"]["inserted"] == 5
+    assert summary["pois"]["inserted"] == 6
     summary = oi.run(geo_db, ["pois"], BBOX, _args(from_raw=str(tmp_path)))
     assert summary["pois"]["inserted"] == 0
     dry = _args(from_raw=str(tmp_path), dry_run=True)

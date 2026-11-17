@@ -1,4 +1,4 @@
-import type { PoiCategory, Role, TransportMode } from '../types/enums';
+import type { PoiCategory, Role, TransportMode, VehicleType } from '../types/enums';
 
 export const MODE_LABELS: Record<TransportMode, string> = {
   WALK: 'Caminar',
@@ -8,6 +8,17 @@ export const MODE_LABELS: Record<TransportMode, string> = {
   CARPOOL: 'Auto compartido',
   MOTORCYCLE: 'Motocicleta',
   CAR: 'Automóvil',
+};
+
+/** 1.2 */
+export const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
+  COMPACT: 'Compacto',
+  SEDAN: 'Sedán',
+  SUV: 'SUV',
+  PICKUP: 'Pickup',
+  MINIVAN: 'Minivan',
+  HYBRID: 'Híbrido',
+  ELECTRIC: 'Eléctrico',
 };
 
 export const POI_CATEGORY_LABELS: Record<PoiCategory, string> = {

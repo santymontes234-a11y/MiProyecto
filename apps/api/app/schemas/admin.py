@@ -1,15 +1,39 @@
 import uuid
 from typing import Any
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
-from app.models.enums import Role, TransportMode
+from app.models.enums import ReportFormat, ReportType, Role, TransportMode
 from app.schemas.common import InputModel, OutputModel, UtcDatetime
 from app.schemas.stats import ModeBreakdown
 
 
 class UserStatusUpdate(InputModel):
     is_active: bool
+    reason: str | None = Field(None, min_length=5, max_length=500)
+
+
+class ReasonBody(InputModel):
+    reason: str = Field(min_length=5, max_length=500)
+
+
+class ReportCreate(InputModel):
+    report_type: ReportType
+    format: ReportFormat = ReportFormat.CSV
+    from_: UtcDatetime | None = Field(None, alias="from")
+    to: UtcDatetime | None = None
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, populate_by_name=True)
+
+
+class ReportOut(OutputModel):
+    id: uuid.UUID
+    report_type: ReportType
+    format: ReportFormat
+    parameters: dict[str, Any]
+    row_count: int
+    created_by: uuid.UUID | None
+    created_at: UtcDatetime
 
 
 class UserRoleUpdate(InputModel):

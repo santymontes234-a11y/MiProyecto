@@ -1,0 +1,263 @@
+# EcoMove Querétaro — entorno de PRODUCCIÓN (VPS con Nginx en el host).
+#
+# Uso (desde la raíz del repositorio, en el VPS):
+#   infrastructure/scripts/deploy.sh                 # recomendado: backup + build + migraciones + arranque
+#   docker compose -f infrastructure/docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# Diseño:
+#   - Nginx corre en el HOST (certbot + fail2ban leen /var/log/nginx). Por eso web y api publican
+#     su puerto SOLO en 127.0.0.1: no son accesibles desde Internet aunque Docker ignore UFW.
+#   - db no publica ningún puerto y vive en la red "backend" (internal: sin salida a Internet).
+#   - migrate es un job de una sola ejecución: api arranca solo si las migraciones terminaron bien.
+#   - Contenedores sin root, sistema de archivos de solo lectura, sin nuevos privilegios.
+# Los secretos viven en ../.env.production (chmod 600, NUNCA en Git). Plantilla: .env.production.example
+name: ecomove-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+x-api-base: &api-base
+  image: ecomove/api:${IMAGE_TAG:-latest}
+  build:
+    context: ../apps/api
+    dockerfile: Dockerfile
+  env_file:
+    - ../.env.production
+  logging: *logging
+  <<: *hardening
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?define POSTGRES_DB en .env.production}
+      # Superusuario: solo para mantenimiento y backups (docker compose exec db ...).
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:?define POSTGRES_ADMIN_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?define POSTGRES_ADMIN_PASSWORD}
+      # Rol sin privilegios que usa la aplicación (lo crea init-prod/10-app-role.sh).
+      APP_DB_USER: ${POSTGRES_USER:?define POSTGRES_USER}
+      APP_DB_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+      TZ: UTC
+      PGTZ: UTC
+    command:
+      - postgres
+      - -c
+      - password_encryption=scram-sha-256
+      - -c
+      - listen_addresses=*
+      - -c
+      - max_connections=${PG_MAX_CONNECTIONS:-60}
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-256MB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-768MB}
+      - -c
+      - work_mem=${PG_WORK_MEM:-8MB}
+      - -c
+      - maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-128MB}
+      - -c
+      - idle_in_transaction_session_timeout=60000
+      - -c
+      - log_min_duration_statement=${PG_LOG_MIN_DURATION_MS:-1000}
+      - -c
+      - log_connections=off
+      - -c
+      - log_lock_waits=on
+      - -c
+      - log_line_prefix=%m [%p] %q%u@%d
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init/01-extensions.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
+      - ./postgres/init-prod/10-app-role.sh:/docker-entrypoint-initdb.d/10-app-role.sh:ro
+    networks: [backend]
+    shm_size: 256mb
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: ${DB_MEMORY_LIMIT:-1g}
+    logging: *logging
+
+  migrate:
+    <<: *api-base
+    restart: "no"
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_ADMIN_USER: ""
+      POSTGRES_ADMIN_PASSWORD: ""
+      BOOTSTRAP_SUPER_ADMIN_PASSWORD: ""
+    entrypoint: ["alembic"]
+    command: ["upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [backend]
+
+  api:
+    <<: *api-base
+    restart: unless-stopped
+    environment:
+      API_ENV: production
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      RUN_MIGRATIONS: "false"
+      # Nunca se pasan las credenciales del superusuario a la API.
+      POSTGRES_ADMIN_USER: ""
+      POSTGRES_ADMIN_PASSWORD: ""
+      # Nginx (host) llega por 127.0.0.1 → docker-proxy; la API solo escucha en 127.0.0.1 del host,
+      # por lo que confiar en X-Forwarded-For es seguro aquí (rate limiting por IP real).
+      FORWARDED_ALLOW_IPS: "*"
+      OSRM_FOOT_URL: ${OSRM_FOOT_URL:-http://osrm-foot:5000}
+      OSRM_BICYCLE_URL: ${OSRM_BICYCLE_URL:-http://osrm-bicycle:5000}
+      OSRM_CAR_URL: ${OSRM_CAR_URL:-http://osrm-car:5000}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-8000}:8000"
+    networks: [backend, frontend]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: ${API_MEMORY_LIMIT:-512m}
+
+  web:
+    image: ecomove/web:${IMAGE_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:?define NEXT_PUBLIC_API_BASE_URL}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?define NEXT_PUBLIC_SITE_URL}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_BASE_URL: http://api:8000/api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-3000}:3000"
+    networks: [frontend]
+    <<: *hardening
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+      - /app/apps/web/.next/cache:size=128m,uid=10001,gid=10001
+    deploy:
+      resources:
+        limits:
+          memory: ${WEB_MEMORY_LIMIT:-512m}
+    logging: *logging
+
+  # --- Ruteo /routes (opcional, perfil "routing"; ~1 GB de disco y ~2 GB de RAM extra) ---
+  osrm-download:
+    profiles: ["routing"]
+    image: debian:bookworm-slim
+    volumes:
+      - osrm_data:/data
+    environment:
+      OSRM_PBF_URL: ${OSRM_PBF_URL:-https://download.geofabrik.de/north-america/mexico-latest.osm.pbf}
+      OSRM_BBOX: ${OSRM_BBOX:--100.65,20.0,-99.0,21.7}
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        if [ -f /data/queretaro.osm.pbf ]; then echo "extracto ya existe"; exit 0; fi
+        apt-get update -qq && apt-get install -y -qq --no-install-recommends curl ca-certificates osmium-tool >/dev/null
+        curl -fsSL "$$OSRM_PBF_URL" -o /data/mexico.osm.pbf
+        osmium extract -b "$$OSRM_BBOX" /data/mexico.osm.pbf -o /data/queretaro.osm.pbf --overwrite
+        rm -f /data/mexico.osm.pbf
+    networks: [frontend]
+    logging: *logging
+
+  osrm-prepare:
+    profiles: ["routing"]
+    image: osrm/osrm-backend:v5.27.1
+    depends_on:
+      osrm-download:
+        condition: service_completed_successfully
+    volumes:
+      - osrm_data:/data
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        for p in foot bicycle car; do
+          if [ -f /data/$$p/queretaro.osrm.mldgr ]; then echo "$$p listo"; continue; fi
+          mkdir -p /data/$$p && cp /data/queretaro.osm.pbf /data/$$p/queretaro.osm.pbf
+          osrm-extract -p /opt/$$p.lua /data/$$p/queretaro.osm.pbf
+          osrm-partition /data/$$p/queretaro.osrm
+          osrm-customize /data/$$p/queretaro.osrm
+          rm -f /data/$$p/queretaro.osm.pbf
+        done
+    networks: [backend]
+    logging: *logging
+
+  osrm-foot: &osrm
+    profiles: ["routing"]
+    image: osrm/osrm-backend:v5.27.1
+    restart: unless-stopped
+    depends_on:
+      osrm-prepare:
+        condition: service_completed_successfully
+    volumes:
+      - osrm_data:/data:ro
+    command: ["osrm-routed", "--algorithm", "mld", "/data/foot/queretaro.osrm"]
+    networks: [backend]
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+
+  osrm-bicycle:
+    <<: *osrm
+    command: ["osrm-routed", "--algorithm", "mld", "/data/bicycle/queretaro.osrm"]
+
+  osrm-car:
+    <<: *osrm
+    command: ["osrm-routed", "--algorithm", "mld", "/data/car/queretaro.osrm"]
+
+networks:
+  # Sin salida a Internet: base de datos, migraciones y OSRM.
+  backend:
+    internal: true
+  # Con salida: la API necesita SMTP y Nominatim; web y api publican en 127.0.0.1.
+  frontend: {}
+
+volumes:
+  pgdata:
+    name: ecomove_prod_pgdata
+  osrm_data:
+    name: ecomove_prod_osrm_data

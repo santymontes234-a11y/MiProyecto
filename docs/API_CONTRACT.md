@@ -5,7 +5,7 @@
 > (`AGENTS.md` §4). Implementación ejecutable: `apps/api/app/schemas/` + `apps/api/app/routers/`.
 > Tipos TypeScript equivalentes: `packages/shared/src/types/api.ts`.
 >
-> Versión del contrato: **1.1.0** — 2026-11-16 · Lo nuevo de 1.1 va marcado con **🆕**.
+> Versión del contrato: **1.2.1** — 2026-11-16 · Lo nuevo de 1.1 va marcado con **🆕**; lo de 1.2, con **🆕 1.2**.
 > Todo 1.1.0 es aditivo respecto a 1.0.x, salvo los cambios de comportamiento marcados con **⚠**.
 
 ## 0. Convenciones generales
@@ -262,6 +262,27 @@ conservar en local los viajes rechazados con `MODE_INACTIVE` y avisar al usuario
 `points = floor(co2_saved_g / 100)`; se guardan en el viaje (cambiar la regla no altera viajes
 pasados). Los logros pueden sumar `bonus_points` (§9). `CANCELLED` = 0 puntos.
 
+
+**4.3 🆕 1.2 Tipo de vehículo y ocupantes** (observaciones O4/O5 del usuario). Campos **opcionales** en
+`TripEstimateRequest`, `TripEstimateBatchRequest`, `TripCreate` y `TripUpdate`; `Trip`, `TripSummary` y
+`TripEstimate` los devuelven (`null` si no aplican):
+
+```jsonc
+{ "vehicle_type": "SUV",   // VehicleType; solo para CAR y CARPOOL (otro medio → 422 VALIDATION_ERROR)
+  "occupants": 3 }          // 1..8, solo CAR y CARPOOL; CARPOOL exige ≥ 2; por omisión CAR = 1, CARPOOL = 2
+```
+
+`VehicleType` = `COMPACT`, `SEDAN`, `SUV`, `PICKUP`, `MINIVAN`, `HYBRID`, `ELECTRIC`. Si falta
+`vehicle_type` se usa `user_preferences.default_vehicle_type` y, si tampoco existe, `SEDAN`.
+
+Cálculo (solo backend, ADR-002), con `f(v)` = factor g/km del tipo de vehículo (tabla `vehicle_types`,
+con fuente citada):
+- CAR / CARPOOL: `co2_emitted_g = km × f(v) / occupants`; `co2_saved_g = km × f(v) − co2_emitted_g`
+  (ahorro frente a ir solo en el mismo vehículo).
+- Resto de medios: sin cambios (`km × (f(CAR) − f(mode))`), con `f(CAR)` = `f(SEDAN)` o el
+  `default_vehicle_type` del usuario.
+- Puntos sin cambios: `floor(co2_saved_g / 100)`.
+
 ## 5. Mapas — `/map`
 
 | Método | Ruta | Rol | Query | Respuesta |
@@ -285,7 +306,9 @@ pasados). Los logros pueden sumar `bonus_points` (§9). `CANCELLED` = 0 puntos.
 **5.1 🆕 Paradas y estaciones = POIs** (`BUS_STOP`, `BIKE_SHARING`, `BIKE_PARKING`; no hay entidad
 aparte). `attributes` admite por convención `{ "code": "QB-001", "lines": ["L1", "L2"] }`
 (`code`: `^[A-Z0-9_-]{2,32}$`, único entre paradas → `409 CONFLICT` si se repite; `lines`: ≤ 50
-strings de ≤ 32). Los POIs importados de OSM llevan `attributes.source = "osm"` y `attributes.osm_id`.
+strings de ≤ 32). `code` es el código **oficial** asignado por un administrador. Los POIs importados de
+OSM llevan `attributes.source = "osm"`, `attributes.osm_id` y, si existe, `attributes.ref` (la etiqueta `ref` de OSM,
+**no única**: puede repetirse entre operadores y sentidos). El import nunca escribe `code` (1.1.1).
 
 ## 6. Estadísticas — `/stats`
 
@@ -408,6 +431,14 @@ geometría completa.
                   "source": "INEGI-MGE-2020", "area_km2": 4.2 } }
 ```
 
+| GET | 🆕 1.2 `/catalog/vehicle-types` | público | — | `200 VehicleTypeInfo[]` |
+
+```jsonc
+// 🆕 1.2 VehicleTypeInfo — sin factor (ADR-002); las etiquetas las ponen los clientes (VEHICLE_TYPE_LABELS)
+{ "code": "SUV", "max_occupants": 7, "is_active": true }
+```
+`Preferences` gana `default_vehicle_type: VehicleType | null` (🆕 1.2).
+
 ## 9. 🆕 Gamificación
 
 | Método | Ruta | Rol | Query | Respuesta |
@@ -495,6 +526,25 @@ El listado admin nunca expone email ni nombre del ciudadano; para contactarle, `
 Motor de ruteo propio (OSRM) con perfiles `foot` (WALK), `bicycle` (BICYCLE, E_SCOOTER) y `car`
 (BUS, CARPOOL, MOTORCYCLE, CAR). Los clientes nunca llaman a OSRM/Nominatim públicos (ARCHITECTURE §2).
 Un viaje `PLANNED` debe enviar la `route` y el `route_token` tal cual los devolvió `/routes`.
+
+
+### 12.1 🆕 1.2 Búsqueda de lugares — `/geocode` (observación O2)
+
+| Método | Ruta | Rol | Query | Respuesta |
+|---|---|---|---|---|
+| GET | `/geocode` | USER | `q` (2..120 caracteres), `limit?` (1..10, def. 5), `near?=lng,lat` | `200 { "items": Place[] }` · `429 RATE_LIMITED` · `503 GEOCODING_UNAVAILABLE` |
+
+```jsonc
+// Place
+{ "name": "Universidad Politécnica de Querétaro", "label": "UPQ, El Marqués, Querétaro",
+  "position": [-100.2526, 20.6551], "category": "university" | null,
+  "source": "zone" | "poi" | "osm" } // 🆕 1.2.1 "zone": municipio o zona de geo.mobility_zones
+```
+
+El backend busca primero en zonas (municipios y colonias de `geo.mobility_zones`), luego en `pois` (nombre y alias, sin distinguir acentos) y completa con Nominatim
+(OSM), limitado al área de servicio (`viewbox` + `bounded=1`), con caché de 24 h, como máximo 1 petición
+por segundo hacia Nominatim (su política de uso) y un User-Agent genérico del proyecto. Límite por
+usuario: 30 búsquedas por minuto. Los clientes nunca llaman a Nominatim directamente.
 
 ## 13. 🆕 Analítica — `/admin/analytics` (rol ADMIN)
 
@@ -616,3 +666,6 @@ Definición ejecutable de los campos: `apps/api/app/schemas/geo_analytics.py`; m
 | 1.0.0 | 2026-11-15 | Contrato inicial | architect |
 | 1.0.1 | 2026-11-15 | Aclaración: contraseña actual incorrecta en `/users/me/password` → 422, no 401. Sin cambios de forma | architect (propuesta backend) |
 | 1.1.0 | 2026-11-16 | Sesiones, reset y verificación de correo, bloqueo; preferencias, exportación y borrado de cuenta; edición, viajes recurrentes, estimación por lotes y validaciones de viajes; `source` + `/routes`; puntos, logros y ranking; notificaciones; catálogos (medios, zonas); admin de viajes, zonas, logros y reportes CSV/PDF; reportes ciudadanos; analítica `/admin/analytics/*`. ⚠ `register` puede responder 202 con verificación obligatoria; el cambio de contraseña invalida los access | architect (propuestas backend rev. 4, geo, web, mobile ×3) |
+| 1.1.1 | 2026-11-16 | §5.1: `code` de parada = código oficial (admin), único; la etiqueta `ref` de OSM va en `attributes.ref` (no única). Corrige el fallo de la migración con refs de OSM duplicados | architect |
+| 1.2.0 | 2026-11-16 | Observaciones del usuario: `vehicle_type` y `occupants` en viajes y estimaciones (§4.3), `/catalog/vehicle-types` y `Preferences.default_vehicle_type` (§8), búsqueda de lugares `/geocode` (§12.1). Todo aditivo y opcional; sin cambios incompatibles | architect |
+| 1.2.1 | 2026-11-16 | §12.1: `Place.source` admite `"zone"` (búsqueda de municipios y zonas) y el orden de búsqueda es zonas → POIs → Nominatim. Factor `SEDAN` = 174 g/km (EPA 2026, DATASETS.md); los viajes ya guardados conservan su factor | architect (propuesta backend + geo) |

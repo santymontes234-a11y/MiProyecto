@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: { default: `${siteConfig.name} · Movilidad sostenible`, template: `%s · ${siteConfig.name}` },
+  title: { default: `${siteConfig.name} · ${siteConfig.slogan}`, template: `%s · ${siteConfig.name}` },
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: ["movilidad sostenible", "Querétaro", "CO2", "bicicleta", "transporte público", "huella de carbono"],

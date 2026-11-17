@@ -65,7 +65,15 @@
       "expo-font"
     ],
     "extra": {
-      "router": {}
-    }
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "dece3a71-0902-4cc6-a2f6-afd5ec318515"
+      }
+    },
+    "owner": "santy32"
   }
 }

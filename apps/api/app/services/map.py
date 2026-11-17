@@ -10,9 +10,10 @@ from sqlalchemy.orm import Session
 from app.core.errors import not_found
 from app.models import Cycleway, Poi, PoiCategory
 from app.schemas.geo import PointGeometry
+from app.services import poi_specialization
 
 
-def _poi_feature(poi: Poi, geojson: str) -> dict[str, Any]:
+def _poi_feature(poi: Poi, geojson: str, spec: poi_specialization.Specialization | None = None) -> dict[str, Any]:
     return {
         "type": "Feature",
         "id": poi.id,
@@ -21,7 +22,8 @@ def _poi_feature(poi: Poi, geojson: str) -> dict[str, Any]:
             "name": poi.name,
             "category": poi.category,
             "description": poi.description,
-            "attributes": poi.attributes or {},
+            # code/lines/ref/capacity se componen desde transit_stops/bike_stations (normalización).
+            "attributes": poi_specialization.compose(poi.attributes, spec),
         },
     }
 
@@ -39,7 +41,8 @@ def list_pois(
     if categories:
         q = q.where(Poi.category.in_(categories))
     rows = db.execute(q.order_by(Poi.name, Poi.id).limit(limit)).all()
-    return {"type": "FeatureCollection", "features": [_poi_feature(p, g) for p, g in rows]}
+    specs = poi_specialization.load(db, [p.id for p, _ in rows])
+    return {"type": "FeatureCollection", "features": [_poi_feature(p, g, specs.get(p.id)) for p, g in rows]}
 
 
 def get_poi(db: Session, poi_id: uuid.UUID, include_inactive: bool = False) -> dict[str, Any]:
@@ -49,7 +52,7 @@ def get_poi(db: Session, poi_id: uuid.UUID, include_inactive: bool = False) -> d
     row = db.execute(q).first()
     if row is None:
         raise not_found("poi")
-    return _poi_feature(row[0], row[1])
+    return _poi_feature(row[0], row[1], poi_specialization.current(db, row[0].id))
 
 
 def point_expr(point: PointGeometry):  # noqa: ANN201

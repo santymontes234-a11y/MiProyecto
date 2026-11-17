@@ -27,6 +27,20 @@
 - Web + mobile: capas de POIs y ciclovías por bbox.
 - **Salida:** el mapa de Querétaro muestra ciclovías reales en ambas plataformas.
 
+## Etapa ABD — Entregables de la materia (PRIORIDAD MÁXIMA, 2026-11-16)
+
+Matriz completa: [`docs/report/REQUISITOS_ABD.md`](report/REQUISITOS_ABD.md).
+
+| Entregable | Dueño |
+|---|---|
+| Normalización (user_preferences, transit_stops/bike_stations, transit_lines, stop_lines), MER, EER, NORMALIZACION.md, `database/01_esquema.sql`, `02_datos_ejemplo.sql`, `03_consultas.sql` | backend (database) |
+| DATASETS.md (APA 7) y ANALISIS_DATOS.md con resultados reales; consultas espaciales | geo |
+| Evidencias del CRUD (capturas + SQL de verificación); validar los scripts sobre una BD vacía | qa |
+| Identidad en la app (íconos, splash, eslogan); CRUD de viajes estable | mobile |
+| Identidad en la web; CRUD de POIs y viajes estable | web (sesión inactiva) |
+| Justificación ODS, historias de usuario, viabilidad e impacto, informe PDF, presentación | reporte (sesión pendiente de abrir) |
+| Identidad (eslogan y logo oficial), matriz y coordinación | architect ✅ |
+
 ## Etapa 3.5 — Contrato 1.1.0 (publicado 2026-11-16)
 
 | Pieza | Dueño | Depende de |

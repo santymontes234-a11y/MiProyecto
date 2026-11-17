@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { BRAND } from '@ecomove/shared';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-native';
 
@@ -57,7 +58,7 @@ export function AnimatedSplash() {
         </View>
       ) : (
         <AppText variant="caption" style={{ position: 'absolute', bottom: 48, color: colors.onPrimary, opacity: 0.85 }}>
-          Muévete limpio, respira mejor
+          {BRAND.slogan}
         </AppText>
       )}
     </View>

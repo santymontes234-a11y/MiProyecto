@@ -1,12 +1,12 @@
-import { map } from '@ecomove/shared';
-
 const DEFAULT_API = 'http://10.0.2.2:8000/api/v1';
 
 /** Configuración pública (EXPO_PUBLIC_*). Nunca contiene secretos. */
 export const config = {
   apiBaseUrl: (process.env.EXPO_PUBLIC_API_BASE_URL ?? DEFAULT_API).replace(/\/+$/, ''),
-  osmTileUrl: process.env.EXPO_PUBLIC_OSM_TILE_URL ?? map.osmTileUrl,
-  osmAttribution: map.osmAttribution,
+  /** O1: CARTO Voyager (claro) y Dark Matter (oscuro), con datos de OpenStreetMap (ADR-005, nota 2026-11-16). */
+  tileUrl: process.env.EXPO_PUBLIC_TILE_URL ?? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  tileUrlDark: process.env.EXPO_PUBLIC_TILE_URL_DARK ?? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  tileAttribution: '© OpenStreetMap contributors © CARTO',
   /** Margen antes de la expiración del access token para renovarlo de forma proactiva. */
   accessTokenSkewMs: 30_000,
 } as const;

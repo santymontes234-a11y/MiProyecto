@@ -7,34 +7,55 @@ from fastapi.responses import JSONResponse
 from app.core.deps import DB, Permissions, require_permission
 from app.models import TransportMode, User
 from app.schemas.common import Page, UtcDatetime
-from app.schemas.trip import TripCreate, TripEstimate, TripEstimateRequest, TripOut, TripSummary
-from app.services import co2, trips as trip_service
+from app.schemas.trip import (
+    RecurringTripCreate,
+    RecurringTripResult,
+    TripCreate,
+    TripEstimate,
+    TripEstimateBatch,
+    TripEstimateBatchRequest,
+    TripEstimateRequest,
+    TripOut,
+    TripSummary,
+    TripUpdate,
+)
+from app.services import trips as trip_service
 
 router = APIRouter(prefix="/trips", tags=["trips"])
 
 TripUser = Annotated[User, Depends(require_permission(Permissions.TRIPS_OWN))]
 _404 = {404: {"description": "TRIP_NOT_FOUND (también si el viaje es de otro usuario)"}}
+_422 = {422: {"description": "VALIDATION_ERROR, TRIP_OUTSIDE_SERVICE_AREA, TRIP_TOO_SHORT, "
+                             "TRIP_IMPLAUSIBLE_SPEED, MODE_INACTIVE, ROUTE_TOKEN_INVALID"},
+        409: {"description": "TRIP_DUPLICATE"}}
 
 
-@router.post("/estimate", response_model=TripEstimate, summary="Estimar distancia y CO₂ sin guardar")
-def estimate(data: TripEstimateRequest, _: TripUser, db: DB) -> dict[str, Any]:
-    distance = trip_service.measure_route(db, data.route) if data.route is not None else float(data.distance_m or 0)
-    r = co2.estimate(db, data.mode, distance)
-    return {"mode": r.mode, "distance_m": r.distance_m, "co2_emitted_g": r.co2_emitted_g,
-            "co2_saved_g": r.co2_saved_g, "emission_factor_g_per_km": r.emission_factor_g_per_km}
+@router.post("/estimate", response_model=TripEstimate, summary="Estimar distancia, CO₂ y puntos sin guardar")
+def estimate(data: TripEstimateRequest, user: TripUser, db: DB) -> dict[str, Any]:
+    return trip_service.estimate(db, user.id, data.mode, data.route, data.distance_m, data.vehicle_type,
+                                 data.occupants)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=TripOut,
-             summary="Registrar viaje (idempotente por client_trip_id)",
-             responses={200: {"model": TripOut, "description": "El client_trip_id ya existía"}})
+@router.post("/estimate/batch", response_model=TripEstimateBatch,
+             summary="Estimar varios medios a la vez (mismo orden que `modes`)")
+def estimate_batch(data: TripEstimateBatchRequest, user: TripUser, db: DB) -> dict[str, Any]:
+    return trip_service.estimate_batch(db, user.id, data.modes, data.route, data.distance_m, data.vehicle_type,
+                                       data.occupants)
+
+
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=TripOut, responses=_422,
+             summary="Registrar viaje (idempotente por client_trip_id)")
 def create_trip(data: TripCreate, user: TripUser, db: DB) -> Any:
-    trip, created = trip_service.create(
-        db, user.id, client_trip_id=data.client_trip_id, mode=data.mode,
-        started_at=data.started_at, ended_at=data.ended_at, route=data.route,
-    )
+    trip, created = trip_service.create(db, user.id, data)
     if created:
         return trip
     return JSONResponse(TripOut.model_validate(trip).model_dump(mode="json"), status_code=200)
+
+
+@router.post("/recurring", status_code=status.HTTP_201_CREATED, response_model=RecurringTripResult,
+             responses=_422, summary="Generar viajes recurrentes en fechas pasadas")
+def create_recurring(data: RecurringTripCreate, user: TripUser, db: DB) -> dict[str, Any]:
+    return trip_service.create_recurring(db, user.id, data)
 
 
 @router.get("", response_model=Page[TripSummary], summary="Historial de viajes propios")
@@ -55,6 +76,12 @@ def list_trips(
 @router.get("/{trip_id}", response_model=TripOut, responses=_404, summary="Detalle de un viaje propio")
 def get_trip(trip_id: uuid.UUID, user: TripUser, db: DB) -> dict[str, Any]:
     return trip_service.get_owned(db, user.id, trip_id)
+
+
+@router.patch("/{trip_id}", response_model=TripOut, responses={**_404, **_422},
+              summary="Editar un viaje propio (recalcula distancia, duración, CO₂ y puntos)")
+def update_trip(trip_id: uuid.UUID, data: TripUpdate, user: TripUser, db: DB) -> dict[str, Any]:
+    return trip_service.update(db, user.id, trip_id, data)
 
 
 @router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT, responses=_404,

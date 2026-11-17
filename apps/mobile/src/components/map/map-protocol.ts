@@ -31,7 +31,7 @@ export interface MapThemeColors {
 }
 
 export type ToWebMessage =
-  | { type: 'init'; center: Position; zoom: number; tileUrl: string; attribution: string; theme: MapThemeColors }
+  | { type: 'init'; center: Position; zoom: number; tileUrl: string; tileUrlDark: string; attribution: string; theme: MapThemeColors }
   | { type: 'setView'; center: Position; zoom?: number }
   | { type: 'fitBounds'; coords: Position[]; padding?: number }
   | { type: 'setMarkers'; layer: 'trip' | 'pois' | 'user'; markers: MapMarker[] }

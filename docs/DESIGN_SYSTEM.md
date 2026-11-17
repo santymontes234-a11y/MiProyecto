@@ -4,6 +4,19 @@
 > Web los consume como variables CSS (`toCssVariables()`); mobile como objetos para `StyleSheet`.
 > Propiedad: agente **design**.
 
+## 0. Identidad
+
+| Elemento | Valor |
+|---|---|
+| Nombre | **EcoMove Querétaro** (corto: EcoMove) |
+| Eslogan | «Cada viaje cuenta.» |
+| Descriptor | Movilidad sostenible medida en CO₂ evitado. |
+| Logo | Hoja que se convierte en trayecto, sobre cuadrado redondeado verde: `docs/brand/logo.svg` (fuente única; en código `LOGO_SVG` y `BRAND` de `@ecomove/shared`) |
+| Colores | Paleta del usuario (§2): verde `#16A34A`, verde oscuro `#14532D`, verde claro `#DCFCE7`, turquesa `#0D9488`, azul `#2563EB`, amarillo `#EAB308` |
+| Tipografía | Inter (interfaz). El informe académico usa una de las permitidas (Arial). |
+
+Los íconos de Android (adaptive icon, splash) y el favicon web se generan desde `docs/brand/logo.svg`.
+
 ## 1. Principios
 
 1. **Verde con propósito:** el verde comunica ahorro de CO₂, no decoración.

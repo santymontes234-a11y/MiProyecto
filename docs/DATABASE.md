@@ -14,141 +14,88 @@
 - Borrado lógico (`is_active`) para entidades administrativas (POIs); borrado físico para datos
   personales cuando el usuario lo solicita.
 
-## 2. Diagrama entidad-relación
+## 2. Diagramas
+
+- **MER:** `docs/report/diagramas/MER.svg`, con fuente Mermaid en `MER.mmd`.
+- **EER:** `docs/report/diagramas/EER.svg`, en notación de Chen.
+- Ambos los genera `generar_diagramas.py` a partir del catálogo de la BD.
+
+Relaciones principales:
 
 ```
-users 1───* trips
-users 1───* refresh_tokens
-users 1───* audit_logs (actor_id, nullable)
-users 1───* emission_factors (updated_by, nullable)
-pois        (independiente)
-cycleways   (independiente)
+users 1──1 user_preferences            roles 1──* users              roles *──* permissions (role_permissions)
+users 1──* trips *──1 transport_modes 1──1 emission_factors        trips *──0..1 vehicle_types
+users 1──* refresh_tokens (sesión = family_id)   users 1──* user_tokens   users 1──* notifications
+users *──* achievements (user_achievements)      users 1──* citizen_reports *──0..1 pois
+pois ⊃ transit_stops (BUS_STOP) | bike_stations (BIKE_SHARING/BIKE_PARKING)   — especialización disjunta y parcial
+transit_stops *──* transit_lines (stop_lines)    cycleways (OSM)    geo.mobility_zones 1──* geo.zone_census
+users 1──* audit_logs (actor_id, SET NULL)       users 1──* reports (created_by, SET NULL)
 ```
 
 ## 3. Tablas
 
-### `users`
-| Columna | Tipo | Notas |
+Son 25: 23 en `public` y 2 en `geo`. Las fuentes de detalle son:
+
+- **Columnas, tipos, restricciones y descripción:** `docs/report/DICCIONARIO_DATOS.md`, generado desde los `COMMENT ON`, cuya fuente es `apps/api/app/models/comments.py`.
+- **Formas normales, dependencias funcionales y excepciones JSONB:** `docs/report/NORMALIZACION.md`.
+
+| Tabla | Propósito | Notas clave |
 |---|---|---|
-| id | uuid PK | |
-| email | varchar(254) | único, se guarda en minúsculas |
-| password_hash | varchar(255) | Argon2id |
-| full_name | varchar(120) | |
-| role | `user_role` | `USER`/`ADMIN`/`SUPER_ADMIN`, def. `USER` |
-| is_active | boolean | def. `true` |
-| failed_login_attempts | integer | def. 0; interno (bloqueo por fuerza bruta) |
-| locked_until | timestamptz null | interno; bloqueo temporal tras 5 fallos |
-| last_login_at | timestamptz null | interno |
-| created_at, updated_at | timestamptz | |
+| `users` | Cuentas | `email` único en minúsculas; Argon2id; `role` con FK a `roles`; `token_version` invalida los access tokens; bloqueo por fuerza bruta |
+| `user_preferences` | Preferencias (1:1) | Idioma, medio y tipo de vehículo por omisión, meta semanal |
+| `roles`, `permissions`, `role_permissions` | RBAC | El permiso se lee de la BD en cada petición (`require_permission`) |
+| `refresh_tokens` | Sesiones | Solo hash SHA-256; rotación por `family_id`; la reutilización revoca la familia |
+| `user_tokens` | Reset y verificación de correo | Solo hash; un solo uso; caducan |
+| `trips` | Viajes | Traza `LineString` (GiST); distancia, CO₂ y puntos calculados en el servidor; `source` GPS/PLANNED; `vehicle_type` y `occupants` solo en CAR/CARPOOL; único `(user_id, client_trip_id)` |
+| `transport_modes` | Medios | `max_speed_kmh` (validación de plausibilidad) e `is_active` |
+| `emission_factors` | Factor vigente por medio | 1:1 con `transport_modes`; el viaje conserva el factor histórico |
+| `vehicle_types` | Factor por tipo de auto | Fuente APA en `source` (§4) |
+| `achievements`, `user_achievements` | Logros | `bonus_points` congelado al otorgar |
+| `notifications` | Avisos in-app | Retención de 90 días |
+| `pois` | Puntos de interés (supertipo) | `UNIQUE (id, category)` para la FK compuesta de los subtipos; borrado lógico |
+| `transit_stops`, `bike_stations` | Subtipos de POI | FK `(poi_id, category)` + CHECK de categoría = disyunción garantizada por la BD |
+| `transit_lines`, `stop_lines` | Líneas y relación N:M parada–línea | |
+| `cycleways` | Ciclovías (OSM) | `osm_id` único |
+| `citizen_reports` | Reportes ciudadanos | `reporter_id` pasa a NULL si el usuario borra su cuenta |
+| `reports` | Informes CSV/PDF | Sin datos personales; descarga auditada |
+| `audit_logs` | Bitácora | Solo se añaden filas; payload redactado |
+| `geo.mobility_zones` | Zonas (INEGI, ADMIN, DEMO) | `geom_utm` y `area_km2` generadas; `is_demo` nunca se mezcla con datos oficiales |
+| `geo.zone_census` | Censo 2020 por zona | PK `(zone_code, source)` |
 
-Restricciones: `CHECK (email = lower(email))`. Índice `(role, is_active)`.
+Migraciones: 0001 inicial · 0002 RBAC y factores · 0003 esquema geo · 0004 ref OSM · 0005 contrato 1.1 · 0006 normalización · 0007 tipos de vehículo · 0008 censo y factores EPA · 0009 comentarios · 0010 FK a catálogos.
 
-### `roles`, `permissions`, `role_permissions` (RBAC interno)
-| Tabla | Columnas | Notas |
-|---|---|---|
-| roles | `name user_role` PK, `description`, `level smallint` | USER=1, ADMIN=2, SUPER_ADMIN=3 |
-| permissions | `code varchar(64)` PK, `description` | p. ej. `users:set_role` |
-| role_permissions | `(role, permission_code)` PK, FK a ambas con CASCADE | semilla en la migración `0002` |
+## 4. Datos semilla — factores
 
-La API sigue exponiendo `role` como string; cada endpoint exige un permiso que se lee de estas
-tablas en cada petición (`app/core/deps.py::require_permission`).
+**`emission_factors`** (g CO₂/km por pasajero). Son valores iniciales del prototipo **sin fuente oficial trazable** (`docs/report/DATASETS.md` §6); el SUPER_ADMIN los ajusta.
 
-### `refresh_tokens`
-| Columna | Tipo | Notas |
-|---|---|---|
-| id | uuid PK | = `jti` del token |
-| user_id | uuid FK→users ON DELETE CASCADE | índice |
-| family_id | uuid | índice; rotación |
-| token_hash | char(64) | SHA-256 hex, único |
-| expires_at | timestamptz | |
-| revoked_at | timestamptz null | |
-| replaced_by_id | uuid null | |
-| created_at | timestamptz | |
+| WALK | BICYCLE | E_SCOOTER | BUS | CARPOOL | MOTORCYCLE | CAR |
+|---|---|---|---|---|---|---|
+| 0 | 0 | 25 | 68 | 64 | 103 | 192 |
 
-### `trips`
-| Columna | Tipo | Notas |
-|---|---|---|
-| id | uuid PK | |
-| user_id | uuid FK→users ON DELETE CASCADE | |
-| client_trip_id | uuid | único por `(user_id, client_trip_id)` — idempotencia |
-| mode | `transport_mode` | |
-| status | `trip_status` | def. `COMPLETED` |
-| started_at, ended_at | timestamptz | `CHECK (ended_at > started_at)` |
-| distance_m | double precision | calculada: `ST_Length(route::geography)` |
-| duration_s | integer | calculada |
-| route | geometry(LineString, 4326) | índice GiST |
-| emission_factor_g_per_km | double precision | factor aplicado (histórico) |
-| co2_emitted_g, co2_saved_g | double precision | `CHECK (>= 0)` |
-| created_at | timestamptz | |
+**`vehicle_types`** (g CO₂/km por vehículo, migración 0008):
 
-Índices: `(user_id, started_at DESC)`, `(started_at)`, GiST `(route)`.
+- Con fuente EPA (2026), año modelo 2024: SEDAN 174, SUV 224, MINIVAN 217 y PICKUP 272.
+- Estimaciones propias: COMPACT 150 y HYBRID 110.
+- Pendiente de verificar: ELECTRIC 75.
 
-### `emission_factors`
-| Columna | Tipo | Notas |
-|---|---|---|
-| mode | `transport_mode` PK | un factor vigente por modo |
-| grams_per_km | double precision | `CHECK (>= 0)` |
-| valid_from | timestamptz | |
-| updated_by | uuid FK→users null | |
+Fórmula (contrato 1.2 §4.3):
 
-### `pois`
-| Columna | Tipo | Notas |
-|---|---|---|
-| id | uuid PK | |
-| name | varchar(160) | |
-| category | `poi_category` | |
-| description | text null | |
-| attributes | jsonb | def. `{}` |
-| location | geometry(Point, 4326) | GiST |
-| is_active | boolean | |
-| created_at, updated_at | timestamptz | |
+- CAR y CARPOOL: `emitido = km·f(v)/ocupantes` y `ahorro = km·f(v) − emitido`.
+- Resto de medios: `ahorro = km·(f(v_ref) − f(medio))`, con `v_ref` = SEDAN o el tipo preferido del usuario.
 
-### `cycleways`
-| Columna | Tipo | Notas |
-|---|---|---|
-| id | uuid PK | |
-| name | varchar(160) null | |
-| is_protected | boolean | |
-| osm_id | bigint null | único; para importaciones de OSM |
-| geom | geometry(LineString, 4326) | GiST |
-| created_at | timestamptz | |
+Desde 1.2, `emission_factors.CAR` ya no interviene en el cálculo.
 
-`length_m` del contrato se calcula en consulta: `ST_Length(geom::geography)`.
+## 5. Consultas
 
-### `audit_logs`
-| Columna | Tipo | Notas |
-|---|---|---|
-| id | uuid PK | |
-| actor_id | uuid FK→users ON DELETE SET NULL | |
-| action | varchar(64) | p. ej. `USER_ROLE_CHANGED` |
-| entity_type | varchar(32) | |
-| entity_id | uuid null | |
-| payload | jsonb | sin secretos |
-| created_at | timestamptz | índice |
-
-## 4. Datos semilla — factores de emisión (g CO₂/km por pasajero)
-
-| Modo | g/km | Fuente orientativa |
-|---|---|---|
-| WALK | 0 | — |
-| BICYCLE | 0 | — |
-| E_SCOOTER | 25 | ciclo de vida, red eléctrica MX |
-| BUS | 68 | autobús urbano diésel, ocupación media |
-| CARPOOL | 64 | automóvil / 3 ocupantes |
-| MOTORCYCLE | 103 | |
-| CAR | 192 | automóvil gasolina, 1 ocupante (línea base) |
-
-> Valores iniciales para desarrollo; el SUPER_ADMIN los ajusta con datos oficiales (SEMARNAT/INECC).
-
-## 5. Consultas clave
+Los ejemplos completos están en `database/03_consultas.sql`: JOIN, GROUP BY/HAVING, subconsultas, CTE, funciones de ventana, una vista, índices con EXPLAIN, consultas espaciales y CRUD. Las consultas espaciales avanzadas están en `apps/api/db/geo/queries/consultas_espaciales.sql`.
 
 ```sql
--- POIs en bbox
+-- POIs en bbox (índice GiST ix_pois_location)
 SELECT ... FROM pois
 WHERE is_active AND location && ST_MakeEnvelope(:min_lng, :min_lat, :max_lng, :max_lat, 4326)
 LIMIT :limit;
 
--- Distancia de una traza
+-- Distancia de una traza (siempre en el servidor)
 SELECT ST_Length(ST_GeomFromGeoJSON(:geojson)::geography);
 ```
 
@@ -158,3 +105,5 @@ SELECT ST_Length(ST_GeomFromGeoJSON(:geojson)::geography);
 - La extensión `postgis` se crea en `infrastructure/postgres/init/01-extensions.sql` y también en la
   migración inicial (idempotente).
 - Respaldos (producción): `pg_dump` diario + WAL; retención 30 días.
+- Entregable ABD: scripts `database/01_esquema.sql`, `02_datos_ejemplo.sql` y `03_consultas.sql`.
+  La forma de ejecutarlos está en `database/README.md`.

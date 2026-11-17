@@ -50,7 +50,7 @@ export default function TrackingScreen() {
   const destCoord = draft.destination?.coord;
   const fitTo = useMemo(() => (firstPoint && destCoord ? [firstPoint, destCoord] : null), [firstPoint, destCoord]);
 
-  if (!draft.mode || recording.status === 'idle') return <Redirect href="/" />;
+  if (!draft.mode || recording.status === 'idle') return <Redirect href="/home" />;
 
   const elapsed = recording.startedAt ? (now - new Date(recording.startedAt).getTime()) / 1000 : 0;
   const uploading = recording.status === 'uploading';
@@ -78,7 +78,7 @@ export default function TrackingScreen() {
     setDialog(null);
     draft.discardRecording();
     disablePrevention();
-    router.replace('/');
+    router.replace('/home');
   };
 
   const tooShort = draft.uploadError instanceof RouteTooShortError;
@@ -123,8 +123,10 @@ export default function TrackingScreen() {
                   tooShort
                     ? 'No registramos suficientes puntos GPS para guardar este viaje.'
                     : isNetworkError(draft.uploadError)
-                      ? 'Sin conexión. Tu viaje sigue en este dispositivo: reintenta cuando tengas señal.'
-                      : getErrorMessage(draft.uploadError)
+                      ? 'Sin conexión. Guardamos tu viaje en el teléfono: reintenta ahora o desde Viajes pendientes.'
+                      : draft.savedLocally
+                        ? `${getErrorMessage(draft.uploadError)} Lo verás en Viajes pendientes.`
+                        : getErrorMessage(draft.uploadError)
                 }
               />
               {tooShort ? (

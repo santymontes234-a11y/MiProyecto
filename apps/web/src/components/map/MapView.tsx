@@ -29,7 +29,7 @@ export function MapLegend() {
         <span className="inline-block h-1 w-6 rounded" style={{ background: modeColors.BICYCLE }} aria-hidden="true" /> Ciclovía protegida
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="inline-block h-1 w-6 rounded" style={{ background: `repeating-linear-gradient(90deg, ${modeColors.BICYCLE} 0 6px, transparent 6px 12px)` }} aria-hidden="true" /> Ciclovía no protegida
+        <span className="inline-block h-1 w-6 rounded" style={{ background: `repeating-linear-gradient(90deg, ${modeColors.BICYCLE} 0 2px, transparent 2px 10px)` }} aria-hidden="true" /> Ciclovía no protegida
       </li>
     </ul>
   );

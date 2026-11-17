@@ -45,8 +45,13 @@ def needs_rehash(password_hash: str) -> bool:
 
 
 def hash_token(token: str) -> str:
-    """Solo se guarda el SHA-256 del refresh token (SECURITY.md §1)."""
+    """Solo se guarda el SHA-256 de refresh y tokens de un solo uso (SECURITY.md §1)."""
     return hashlib.sha256(token.encode()).hexdigest()
+
+
+def generate_one_time_token() -> str:
+    """Token de un solo uso de 384 bits (≥ 256 exigidos por el contrato §2.1)."""
+    return secrets.token_urlsafe(48)
 
 
 @dataclass(frozen=True)
@@ -60,7 +65,10 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-def create_access_token(user_id: uuid.UUID, role: str) -> tuple[str, int]:
+def create_access_token(
+    user_id: uuid.UUID, role: str, token_version: int = 0, session_id: uuid.UUID | None = None
+) -> tuple[str, int]:
+    """`ver` = users.token_version (invalidación inmediata); `sid` = sesión (familia de refresh)."""
     s = get_settings()
     now = _now()
     ttl = timedelta(minutes=s.jwt_access_token_expires_minutes)
@@ -71,7 +79,10 @@ def create_access_token(user_id: uuid.UUID, role: str) -> tuple[str, int]:
         "jti": str(uuid.uuid4()),
         "iat": now,
         "exp": now + ttl,
+        "ver": token_version,
     }
+    if session_id is not None:
+        payload["sid"] = str(session_id)
     token = jwt.encode(payload, s.jwt_secret_key.get_secret_value(), algorithm=s.jwt_algorithm)
     return token, int(ttl.total_seconds())
 

@@ -2,11 +2,11 @@ import { LEAFLET_CSS, LEAFLET_JS } from './leaflet-assets.generated';
 
 /**
  * Documento HTML del mapa: Leaflet embebido (sin CDN) y puente postMessage.
- * Solo los tiles OSM salen a la red (ARCHITECTURE §2, ADR-005).
+ * Solo los tiles (CARTO Voyager / Dark Matter, datos OSM) salen a la red (ARCHITECTURE §2, ADR-005).
  */
 const BRIDGE = String.raw`
 (function () {
-  var map, tiles, layers = {}, theme = null;
+  var map, tiles, layers = {}, theme = null, tileUrls = null;
   function post(msg) { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(msg)); }
   function ll(c) { return [c[1], c[0]]; }
   function group(name) {
@@ -21,12 +21,15 @@ const BRIDGE = String.raw`
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
   function makeIcon(m) {
     var color = markerColor(m);
-    var size = m.kind === 'poi' ? 22 : 30;
+    if (m.kind === 'user') {
+      return L.divIcon({ className: 'eco-icon', html: '<div class="halo"></div><div class="dot" style="background:' + color + '"></div>', iconSize: [36, 36], iconAnchor: [18, 18] });
+    }
+    if (m.kind === 'poi') {
+      return L.divIcon({ className: 'eco-icon', html: '<div class="poi" style="background:' + color + '"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+    }
     var inner = m.kind === 'origin' ? 'A' : m.kind === 'destination' ? 'B' : '';
-    var html = m.kind === 'user'
-      ? '<div class="pulse" style="background:' + color + '"></div>'
-      : '<div class="pin" style="width:' + size + 'px;height:' + size + 'px;background:' + color + '">' + inner + '</div>';
-    return L.divIcon({ className: 'eco-icon', html: html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+    var html = '<div class="pin" style="background:' + color + '"><span>' + inner + '</span></div><div class="pin-shadow"></div>';
+    return L.divIcon({ className: 'eco-icon', html: html, iconSize: [34, 44], iconAnchor: [17, 42], tooltipAnchor: [0, -38] });
   }
   function emitMove() {
     var b = map.getBounds(), c = map.getCenter();
@@ -34,16 +37,19 @@ const BRIDGE = String.raw`
       bbox: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()] });
   }
   function applyTheme(t) {
+    var changed = !theme || theme.dark !== t.dark;
     theme = t;
     document.body.classList.toggle('dark', !!t.dark);
+    if (changed && tiles && tileUrls) tiles.setUrl(t.dark ? tileUrls.dark : tileUrls.light);
   }
   var handlers = {
     init: function (m) {
+      tileUrls = { light: m.tileUrl, dark: m.tileUrlDark || m.tileUrl };
       applyTheme(m.theme);
-      map = L.map('map', { zoomControl: false, attributionControl: true, preferCanvas: true }).setView(ll(m.center), m.zoom);
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      map = L.map('map', { zoomControl: false, attributionControl: true, preferCanvas: false, zoomSnap: 0.5 }).setView(ll(m.center), m.zoom);
+      L.control.zoom({ position: 'bottomright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(map);
       map.attributionControl.setPrefix(false);
-      tiles = L.tileLayer(m.tileUrl, { maxZoom: 19, attribution: m.attribution, crossOrigin: true }).addTo(map);
+      tiles = L.tileLayer(m.theme.dark ? tileUrls.dark : tileUrls.light, { maxZoom: 20, subdomains: 'abcd', detectRetina: false, attribution: m.attribution, crossOrigin: true }).addTo(map);
       tiles.on('tileerror', function () { post({ type: 'error', message: 'tiles' }); });
       map.on('click', function (e) { post({ type: 'tap', coord: [e.latlng.lng, e.latlng.lat] }); });
       map.on('moveend', emitMove);
@@ -59,16 +65,23 @@ const BRIDGE = String.raw`
       var g = group('markers-' + m.layer); g.clearLayers();
       m.markers.forEach(function (mk) {
         var marker = L.marker(ll(mk.coord), { icon: makeIcon(mk), keyboard: true, title: mk.label || '', zIndexOffset: mk.kind === 'poi' ? 0 : 1000 });
-        if (mk.label) marker.bindTooltip(escapeHtml(mk.label), { direction: 'top', offset: [0, -12] });
+        if (mk.label) marker.bindTooltip(escapeHtml(mk.label), { direction: 'top', offset: mk.kind === 'poi' ? [0, -10] : [0, -4] });
         marker.on('click', function (e) { L.DomEvent.stopPropagation(e); post({ type: 'markerPress', id: mk.id, layer: m.layer }); });
         g.addLayer(marker);
       });
     },
     setLines: function (m) {
       var g = group('lines-' + m.layer); g.clearLayers();
+      var isRoute = m.layer === 'route';
       m.lines.forEach(function (ln) {
-        g.addLayer(L.polyline(ln.coords.map(ll), { color: ln.color, weight: ln.weight || 4, opacity: 0.9,
-          dashArray: ln.dashed ? '8 8' : null, lineCap: 'round', lineJoin: 'round', interactive: false }));
+        var latlngs = ln.coords.map(ll), w = ln.weight || 4;
+        if (isRoute) {
+          // Borde (casing) estilo navegador: línea ancha clara/oscura debajo de la ruta.
+          g.addLayer(L.polyline(latlngs, { color: theme && theme.dark ? '#0B1220' : '#FFFFFF', weight: w + 5, opacity: 0.95,
+            lineCap: 'round', lineJoin: 'round', interactive: false }));
+        }
+        g.addLayer(L.polyline(latlngs, { color: ln.color, weight: isRoute ? w + 1 : w, opacity: isRoute ? 1 : 0.85,
+          dashArray: ln.dashed ? (isRoute ? '2 10' : '8 8') : null, lineCap: 'round', lineJoin: 'round', interactive: false }));
       });
     },
     setTheme: function (m) { applyTheme(m.theme); }
@@ -88,19 +101,29 @@ const BRIDGE = String.raw`
 `;
 
 const STYLE = `
-html, body, #map { height: 100%; margin: 0; padding: 0; background: #E5E7EB; }
-body.dark, body.dark #map { background: #111827; }
-body.dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9); }
+html, body, #map { height: 100%; margin: 0; padding: 0; background: #F2EFE9; }
+body.dark, body.dark #map { background: #0E1626; }
 .leaflet-container { font-family: -apple-system, Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 .eco-icon { background: transparent; border: none; }
-.pin { border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,.35);
-  color: #FFFFFF; font: 700 13px/1 sans-serif; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-.pulse { width: 18px; height: 18px; margin: 6px; border-radius: 50%; border: 3px solid #FFFFFF;
-  box-shadow: 0 0 0 0 rgba(37,99,235,.6); animation: pulse 2s infinite; box-sizing: border-box; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,.55); } 70% { box-shadow: 0 0 0 14px rgba(37,99,235,0); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } }
-@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
-.leaflet-control-attribution { font-size: 10px; }
-body.dark .leaflet-control-attribution, body.dark .leaflet-bar a { background: #1F2937; color: #F9FAFB; }
+.pin { position: absolute; left: 2px; top: 0; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  border: 3px solid #FFFFFF; box-shadow: -1px 3px 8px rgba(0,0,0,.35); box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+.pin span { transform: rotate(45deg); color: #FFFFFF; font: 700 13px/1 sans-serif; }
+.pin-shadow { position: absolute; left: 11px; top: 38px; width: 12px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.25); filter: blur(1px); }
+.poi { width: 14px; height: 14px; margin: 3px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 1px 4px rgba(0,0,0,.35); box-sizing: content-box; }
+.dot { position: absolute; left: 9px; top: 9px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid #FFFFFF;
+  box-shadow: 0 1px 5px rgba(0,0,0,.4); box-sizing: border-box; }
+.halo { position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%; background: rgba(37,99,235,.18); animation: halo 2s infinite; }
+@keyframes halo { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .halo { animation: none; } }
+.leaflet-control-attribution { font-size: 10px; background: rgba(255,255,255,.8) !important; border-radius: 6px 0 0 0; }
+.leaflet-bar { border: none !important; border-radius: 12px !important; box-shadow: 0 2px 8px rgba(0,0,0,.25) !important; overflow: hidden; }
+.leaflet-bar a { width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 22px !important; color: #111827; background: #FFFFFF; }
+.leaflet-bottom.leaflet-right .leaflet-control-zoom { margin-bottom: 28px; margin-right: 12px; }
+.leaflet-tooltip { border: none; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.25); font-weight: 600; }
+body.dark .leaflet-control-attribution { background: rgba(17,24,39,.8) !important; color: #D1D5DB; }
+body.dark .leaflet-control-attribution a { color: #93C5FD; }
+body.dark .leaflet-bar a { background: #1F2937; color: #F9FAFB; border-bottom-color: #374151; }
+body.dark .leaflet-tooltip { background: #1F2937; color: #F9FAFB; }
 `;
 
 export const MAP_HTML = `<!DOCTYPE html>

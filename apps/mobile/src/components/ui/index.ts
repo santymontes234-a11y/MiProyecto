@@ -8,3 +8,4 @@ export * from './Skeleton';
 export * from './StateViews';
 export * from './TextField';
 export * from './Toast';
+export * from './BrandLogo';

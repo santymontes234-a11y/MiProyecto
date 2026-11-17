@@ -13,3 +13,19 @@ de toque).
 **Consecuencias.** Web y mobile usan el mismo motor y el mismo estilo de capas. El rendimiento con
 trazas muy largas es menor que con un mapa nativo; se simplifica la geometría antes de dibujarla.
 Hay que revisar esta decisión si en el futuro se adopta MapLibre Native.
+
+## Nota 2026-11-16 — Estilo del mapa (observación O1)
+
+El usuario consideró «feo» el estilo de `tile.openstreetmap.org` y pidió algo parecido a Google Maps.
+Sin cambiar de motor ni usar Google, mobile pasa a tiles raster de **CARTO** con datos OSM:
+
+- Claro: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png` (Voyager).
+- Oscuro: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png` (Dark Matter); se elimina
+  el filtro CSS de inversión.
+- Atribución visible: «© OpenStreetMap contributors © CARTO».
+- Configurables con `EXPO_PUBLIC_TILE_URL` y `EXPO_PUBLIC_TILE_URL_DARK`.
+
+Además: pines en forma de gota con sombra (A/B), POIs como puntos con borde, ubicación del usuario
+con halo, controles de zoom de 44 dp con sombra, y rutas con borde (*casing*) blanco u oscuro bajo la
+línea de color. El uso gratuito de CARTO tiene límites; antes de producción hay que contratar un plan
+o servir tiles propios (ARCHITECTURE §10).

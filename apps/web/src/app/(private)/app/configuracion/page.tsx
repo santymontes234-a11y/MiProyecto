@@ -15,7 +15,10 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/Fields";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/StateViews";
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import { PreferencesCard } from "@/components/settings/PreferencesCard";
+import { SessionsCard } from "@/components/settings/SessionsCard";
+import { PrivacyCard } from "@/components/settings/PrivacyCard";
+import { EmailVerificationBanner } from "@/components/settings/EmailVerificationBanner";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -45,7 +48,8 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Configuración" description="Seguridad y privacidad de tu cuenta." />
+      <PageHeader title="Configuración" description="Preferencias, seguridad y privacidad de tu cuenta." />
+      <EmailVerificationBanner />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="Cambiar contraseña" description="Al cambiarla se cerrará la sesión en todos tus dispositivos." />
@@ -57,20 +61,9 @@ export default function SettingsPage() {
             <Button type="submit" loading={isSubmitting}>Actualizar contraseña</Button>
           </form>
         </Card>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader title="Sesión" description="Cierra la sesión en este navegador." />
-            <LogoutButton className="w-auto border border-line" />
-          </Card>
-          <Card>
-            <CardHeader title="Privacidad" />
-            <ul className="list-disc space-y-2 pl-5 text-sm text-ink-muted">
-              <li>Tus recorridos GPS solo los ves tú; la administración consulta datos agregados.</li>
-              <li>Puedes exportar tu historial completo en CSV desde «Historial de viajes».</li>
-              <li>La eliminación de cuenta llegará en una próxima versión (etapa 5 del plan).</li>
-            </ul>
-          </Card>
-        </div>
+        <PreferencesCard />
+        <SessionsCard />
+        <PrivacyCard />
       </div>
     </>
   );

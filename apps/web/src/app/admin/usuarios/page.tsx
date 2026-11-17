@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Pagination } from "@/components/ui/Pagination";
-import { FilterInput, FilterSelect } from "@/components/ui/Fields";
+import { FilterInput, FilterSelect, TextareaField } from "@/components/ui/Fields";
 import { ExportButtons } from "@/components/ui/ExportButtons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +20,7 @@ import { Alert } from "@/components/ui/StateViews";
 
 const PAGE_SIZE = 20;
 
-type Pending = { kind: "status"; user: User; next: boolean } | { kind: "role"; user: User; next: Role };
+type Pending = { kind: "status"; user: User; next: boolean } | { kind: "role"; user: User; next: Role } | { kind: "delete"; user: User };
 
 export default function AdminUsersPage() {
   const { user: me } = useSession();
@@ -32,6 +32,7 @@ export default function AdminUsersPage() {
   const [active, setActive] = useState<"" | "true" | "false">("");
   const [pending, setPending] = useState<Pending | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -44,16 +45,21 @@ export default function AdminUsersPage() {
   const filters = { q: debouncedQ || undefined, role: role || undefined, is_active: active === "" ? undefined : active === "true" };
   const list = useApiQuery(JSON.stringify({ page, ...filters }), () => api.admin.users({ ...filters, page, page_size: PAGE_SIZE }));
 
-  const mutate = useMutation(async (p: Pending) =>
-    p.kind === "status" ? api.admin.setUserStatus(p.user.id, p.next) : api.admin.setUserRole(p.user.id, p.next),
-  );
+  const mutate = useMutation(async (p: Pending, why: string) => {
+    if (p.kind === "status") return api.admin.setUserStatus(p.user.id, p.next, why || undefined);
+    if (p.kind === "role") return api.admin.setUserRole(p.user.id, p.next);
+    return api.admin.deleteUser(p.user.id, why);
+  });
+  const reasonRequired = pending?.kind === "delete";
+  const reasonValid = reason.trim() === "" ? !reasonRequired : reason.trim().length >= 5 && reason.trim().length <= 500;
 
   async function confirm() {
-    if (!pending) return;
-    const res = await mutate.run(pending);
+    if (!pending || !reasonValid) return;
+    const res = await mutate.run(pending, reason.trim());
     if (res.ok) {
-      setFlash(pending.kind === "status" ? `Usuario ${pending.next ? "activado" : "desactivado"}.` : `Rol actualizado a ${ROLE_LABELS[pending.next]}.`);
+      setFlash(pending.kind === "status" ? `Usuario ${pending.next ? "activado" : "desactivado"}.` : pending.kind === "role" ? `Rol actualizado a ${ROLE_LABELS[pending.next]}.` : "Usuario eliminado.");
       setPending(null);
+      setReason("");
       list.refetch();
     }
   }
@@ -88,9 +94,12 @@ export default function AdminUsersPage() {
         u.id === me.id || (!isSuper && u.role !== "USER") ? (
           <span className="text-xs text-ink-muted">—</span>
         ) : (
-          <Button size="sm" variant={u.is_active ? "ghost" : "secondary"} onClick={() => setPending({ kind: "status", user: u, next: !u.is_active })}>
-            {u.is_active ? "Desactivar" : "Activar"}
-          </Button>
+          <div className="flex justify-end gap-1">
+            <Button size="sm" variant={u.is_active ? "ghost" : "secondary"} onClick={() => setPending({ kind: "status", user: u, next: !u.is_active })}>
+              {u.is_active ? "Desactivar" : "Activar"}
+            </Button>
+            {isSuper && <Button size="sm" variant="ghost" onClick={() => setPending({ kind: "delete", user: u })}>Eliminar</Button>}
+          </div>
         ),
     },
   ];
@@ -120,18 +129,30 @@ export default function AdminUsersPage() {
         {list.data && <Pagination page={list.data.page} pageSize={list.data.page_size} total={list.data.total} onPage={setPage} />}
       </Card>
 
-      <Modal open={!!pending} onClose={() => { setPending(null); mutate.setError(null); }} title="Confirmar cambio">
+      <Modal open={!!pending} onClose={() => { setPending(null); setReason(""); mutate.setError(null); }} title="Confirmar cambio">
         {pending && (
           <p className="text-sm text-ink-muted">
             {pending.kind === "status"
               ? `¿${pending.next ? "Activar" : "Desactivar"} la cuenta de ${pending.user.full_name}? ${pending.next ? "" : "Perderá el acceso de inmediato."}`
-              : `¿Cambiar el rol de ${pending.user.full_name} a ${ROLE_LABELS[pending.next]}?`}
+              : pending.kind === "role"
+                ? `¿Cambiar el rol de ${pending.user.full_name} a ${ROLE_LABELS[pending.next]}?`
+                : `¿Eliminar definitivamente a ${pending.user.full_name} y todos sus datos? No se puede deshacer.`}
           </p>
+        )}
+        {pending && pending.kind !== "role" && (
+          <div className="mt-4">
+            <TextareaField
+              label={reasonRequired ? "Motivo (obligatorio, queda en la auditoría)" : "Motivo (opcional, queda en la auditoría)"}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              error={!reasonValid ? "Entre 5 y 500 caracteres" : undefined}
+            />
+          </div>
         )}
         {mutate.error && <div className="mt-3"><Alert tone="error">{mutate.error}</Alert></div>}
         <div className="mt-6 flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => { setPending(null); mutate.setError(null); }}>Cancelar</Button>
-          <Button variant={pending?.kind === "status" && !pending.next ? "danger" : "primary"} loading={mutate.pending} onClick={confirm}>Confirmar</Button>
+          <Button variant="ghost" onClick={() => { setPending(null); setReason(""); mutate.setError(null); }}>Cancelar</Button>
+          <Button variant={pending?.kind === "delete" || (pending?.kind === "status" && !pending.next) ? "danger" : "primary"} loading={mutate.pending} disabled={!reasonValid} onClick={confirm}>Confirmar</Button>
         </div>
       </Modal>
     </>

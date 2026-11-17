@@ -1,8 +1,9 @@
+import uuid
 from typing import Literal
 
 from pydantic import EmailStr, Field
 
-from app.schemas.common import InputModel, OutputModel
+from app.schemas.common import InputModel, OutputModel, UtcDatetime
 from app.schemas.user import FullName, Password, UserOut
 
 
@@ -27,3 +28,29 @@ class TokenPair(OutputModel):
     token_type: Literal["bearer"] = "bearer"
     expires_in: int
     user: UserOut
+
+
+class EmailRequest(InputModel):
+    email: EmailStr
+
+
+class TokenConfirm(InputModel):
+    token: str = Field(min_length=20, max_length=256)
+
+
+class PasswordResetConfirm(InputModel):
+    token: str = Field(min_length=20, max_length=256)
+    new_password: Password
+
+
+class MessageResponse(OutputModel):
+    message: str
+
+
+class SessionOut(OutputModel):
+    id: uuid.UUID
+    created_at: UtcDatetime
+    last_used_at: UtcDatetime
+    expires_at: UtcDatetime
+    user_agent: str | None
+    current: bool

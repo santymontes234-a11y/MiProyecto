@@ -60,6 +60,10 @@ export default function ProfileScreen() {
         <ListRow icon="trophy-outline" title="Logros y recompensas" onPress={() => router.push('/achievements')} />
         <Divider />
         <ListRow icon="podium-outline" title="Ranking" onPress={() => router.push('/ranking')} />
+        <Divider />
+        <ListRow icon="cloud-upload-outline" title="Viajes pendientes" subtitle="Guardados en el teléfono sin enviar" onPress={() => router.push('/pending-trips')} />
+        <Divider />
+        <ListRow icon="megaphone-outline" title="Mis reportes" subtitle="Problemas de infraestructura reportados" onPress={() => router.push('/my-reports')} />
       </Card>
 
       <Card style={{ marginTop: spacing.lg }}>

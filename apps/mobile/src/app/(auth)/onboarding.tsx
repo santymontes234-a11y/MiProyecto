@@ -22,7 +22,7 @@ const SLIDES: Slide[] = [
   {
     key: 'move',
     icon: 'bicycle',
-    title: 'Muévete de forma sostenible',
+    title: 'Cada viaje cuenta',
     body: 'Registra tus viajes en bici, caminando, en transporte público o en carpooling por la Zona Metropolitana de Querétaro.',
     colorKey: 'primary',
   },

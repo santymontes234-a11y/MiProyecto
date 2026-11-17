@@ -140,13 +140,47 @@ def test_spatial_endpoints(geo_client: TestClient, client: Any) -> None:
         headers=admin,
     )
     assert r.status_code == 200 and r.json()["total"] > 0
+    crossing = r.json()["items"][0]
+    assert set(crossing) == {"trip_id", "mode", "started_at", "overlap_m"}
+
+    zone = geo_client.get(
+        f"{PREFIX}/admin/analytics/zones",
+        params={**RANGE, "dataset": "demo", "kind": "custom"},
+        headers=admin,
+    ).json()["features"][0]["id"]
+    r = geo_client.get(
+        f"{PREFIX}/admin/analytics/zones/{zone}/trips",
+        params={**RANGE, "dataset": "demo", "relation": "both", "page_size": 5},
+        headers=admin,
+    )
+    page = r.json()
+    assert r.status_code == 200 and len(page["items"]) <= 5 and page["total"] > 0
+    assert all(t["relation"] == "both" and t["source"] == "GPS" for t in page["items"])
+    a, b = page["items"][0]["trip_id"], page["items"][1]["trip_id"]
+    r = geo_client.get(
+        f"{PREFIX}/admin/analytics/route-overlap", params={"trip_a": a, "trip_b": b}, headers=admin
+    )
+    assert r.status_code == 200 and {"share_a", "share_b", "tolerance_m"} <= set(r.json())
+    missing = "00000000-0000-0000-0000-000000000000"
+    r = geo_client.get(f"{PREFIX}/admin/analytics/zones/{missing}/trips", headers=admin)
+    assert r.status_code == 404 and r.json()["error"]["code"] == "ZONE_NOT_FOUND"
 
     r = geo_client.get(
         f"{PREFIX}/admin/analytics/distance",
-        params={"from": "-100.39,20.59", "to": "-100.38,20.60"},
+        params={"origin": "-100.39,20.59", "destination": "-100.38,20.60"},
         headers=admin,
     )
     assert r.status_code == 200 and 1400 < r.json()["distance_m"] < 1600
+    assert r.json()["meta"]["dataset"] == "official"
+    assert fc["meta"]["bbox"] == [float(x) for x in BBOX.split(",")]
+
+    r = geo_client.get(
+        f"{PREFIX}/admin/analytics/bike-lane-coverage",
+        params={**RANGE, "dataset": "demo"},
+        headers=admin,
+    )
+    item = r.json()["items"][0]
+    assert set(item) == {"mode", "trips_count", "covered_share"} and 0 <= item["covered_share"] <= 1
 
 
 def test_indicator_endpoints(geo_client: TestClient, client: Any) -> None:
@@ -163,6 +197,25 @@ def test_indicator_endpoints(geo_client: TestClient, client: Any) -> None:
     assert len(ts["points"]) >= 12 and ts["points"][0]["period_start"].endswith("Z")
     ph = geo_client.get(f"{PREFIX}/admin/analytics/peak-hours", params=q, headers=admin).json()
     assert {p["hour"] for p in ph["items"]} <= set(range(24))
+    ph = geo_client.get(
+        f"{PREFIX}/admin/analytics/peak-hours", params={**q, "by_weekday": True}, headers=admin
+    ).json()
+    assert {p["weekday"] for p in ph["items"]} <= set(range(7))
+    ug = geo_client.get(f"{PREFIX}/admin/analytics/users-growth", params=q, headers=admin).json()
+    totals = [p["total_users"] for p in ug["points"]]
+    assert totals == sorted(totals) and totals[-1] > 0
+    assert sum(p["new_users"] for p in ug["points"]) <= totals[-1]
+    inf = geo_client.get(f"{PREFIX}/admin/analytics/infrastructure", params=q, headers=admin).json()
+    assert set(inf["pois_by_category"]) == {
+        "BIKE_PARKING",
+        "BIKE_SHARING",
+        "BUS_STOP",
+        "EV_CHARGER",
+        "REPAIR_STATION",
+    }
+    assert inf["cycleways_length_m"] > 0 and inf["meta"]["bbox"] is not None
+    cm = geo_client.get(f"{PREFIX}/admin/analytics/co2-methodology", headers=admin).json()
+    assert {"assumptions", "units", "notes", "meta"} <= set(cm)
 
 
 def test_priority_endpoint_is_explainable(geo_client: TestClient, client: Any) -> None:
@@ -177,9 +230,16 @@ def test_priority_endpoint_is_explainable(geo_client: TestClient, client: Any) -
     scored = [f for f in body["features"] if f["properties"]["score"] is not None]
     assert scored, "debe haber celdas con muestra suficiente en DEMO"
     top = scored[0]["properties"]
-    assert (
-        top["explanation"] and top["components"] and top["confidence"] in ("baja", "media", "alta")
-    )
+    assert top["explanation"] and top["components"] and 0 <= top["confidence"] <= 1
+    assert set(top) == {
+        "score",
+        "label",
+        "confidence",
+        "sample",
+        "demand_share",
+        "components",
+        "explanation",
+    }
     assert any("estudio técnico" in n for n in body["meta"]["notes"])
 
     # Sin infraestructura oficial cargada, la brecha queda "no disponible", no "lejos"
@@ -188,8 +248,10 @@ def test_priority_endpoint_is_explainable(geo_client: TestClient, client: Any) -
         params={**RANGE, "bbox": BBOX, "infra": "bus_stop"},
         headers=admin,
     )
-    gap = next(c for c in r.json()["components"] if c["kind"] == "gap")
+    cell = r.json()["features"][0]["properties"]
+    gap = next(c for c in cell["components"] if c["kind"] == "gap")
     assert gap["available"] is False
+    assert any("no disponible" in n for n in r.json()["notes"])
 
 
 def test_authorization_and_errors(geo_client: TestClient, client: Any) -> None:

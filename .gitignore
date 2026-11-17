@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.*.example
 *.pem
 *.key
 
@@ -24,6 +25,12 @@ venv/
 .ruff_cache/
 htmlcov/
 .coverage
+
+# Infraestructura: datos locales de despliegue y backups
+.deploy/
+backups/
+*.dump
+*.sql.gz
 
 # Mobile builds
 android/

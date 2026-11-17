@@ -15,6 +15,7 @@ import { FilterInput, FilterSelect } from "@/components/ui/Fields";
 import { ExportButtons } from "@/components/ui/ExportButtons";
 import { ModeBadge } from "@/components/ui/ModeBadge";
 import { Badge } from "@/components/ui/Badge";
+import { ButtonLink } from "@/components/ui/Button";
 import { TRIP_CSV_HEADERS, tripToCsvRow } from "@/components/trips/tripCsv";
 
 const PAGE_SIZE = 20;
@@ -26,7 +27,9 @@ const columns: Column<TripSummary>[] = [
   { key: "duration", header: "Duración", align: "right", cell: (t) => formatDuration(t.duration_s) },
   { key: "saved", header: "CO₂ evitado", align: "right", cell: (t) => <span className="font-semibold text-brand-strong">{formatCo2(t.co2_saved_g)}</span> },
   { key: "emitted", header: "CO₂ emitido", align: "right", cell: (t) => formatCo2(t.co2_emitted_g) },
+  { key: "points", header: "Puntos", align: "right", cell: (t) => t.points },
   { key: "status", header: "Estado", cell: (t) => (t.status === "COMPLETED" ? <Badge tone="green">Completado</Badge> : <Badge tone="gray">Cancelado</Badge>) },
+  { key: "actions", header: "Acciones", align: "right", cell: (t) => <Link className="inline-flex min-h-11 items-center text-sm font-medium text-brand-strong underline" href={`/app/viajes/${encodeURIComponent(t.id)}`}>Ver o editar</Link> },
 ];
 
 export default function TripsPage() {
@@ -53,12 +56,15 @@ export default function TripsPage() {
         title="Historial de viajes"
         description="Todos tus trayectos registrados. El CO₂ lo calcula el servidor de EcoMove."
         actions={
+          <>
+          <ButtonLink href="/app/viajes/nuevo" size="sm">Registrar viaje</ButtonLink>
           <ExportButtons
             getCsv={async () => {
               const all = await fetchAllPages((p, size) => api.trips.list({ ...filters, page: p, page_size: size }));
               return { filename: timestampedName("ecomove-mis-viajes", "csv"), headers: TRIP_CSV_HEADERS, rows: all.map(tripToCsvRow) };
             }}
           />
+          </>
         }
       />
       <Card>

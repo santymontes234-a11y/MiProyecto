@@ -7,7 +7,6 @@ import json
 import uuid
 
 import pytest
-
 from conftest import TEST_PASSWORD, Account, Api, assert_error, assert_no_leak, login, unique_email
 
 
@@ -47,6 +46,17 @@ def test_register_normalizes_email_and_rejects_duplicates(api: Api) -> None:
     dup = api.post("/auth/register", json={"email": email, "password": TEST_PASSWORD,
                                            "full_name": "Duplicado"})
     assert_error(dup, 409, "EMAIL_ALREADY_REGISTERED")
+
+
+def test_register_new_email_is_never_reported_as_duplicate(api: Api) -> None:
+    """Regresión 2026-11-16: un fallo de FK al crear user_preferences se traducía en
+    409 EMAIL_ALREADY_REGISTERED para correos nuevos. Un correo nunca usado debe dar 201/202."""
+    for _ in range(3):  # varios registros seguidos: el fallo aparecía en altas consecutivas
+        email = unique_email()
+        resp = api.post("/auth/register", json={"email": email, "password": TEST_PASSWORD,
+                                                "full_name": "Regresión FK"})
+        assert resp.status_code in (201, 202), f"{email}: {resp.status_code} {resp.text[:300]}"
+        assert "EMAIL_ALREADY_REGISTERED" not in resp.text
 
 
 @pytest.mark.parametrize(

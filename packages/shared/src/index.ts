@@ -5,5 +5,6 @@ export * from './types/api-v1-1';
 export * from './api/errors';
 export * from './api/client';
 export * from './design/tokens';
+export * from './design/brand';
 export * from './constants/labels';
 export * from './format';

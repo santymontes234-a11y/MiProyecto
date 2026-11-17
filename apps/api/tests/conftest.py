@@ -35,6 +35,8 @@ PREFIX = "/api/v1"
 PASSWORD = "Segura-2026-pass"
 
 # Factores semilla (DATABASE.md §4), para restaurarlos entre tests.
+SEED_SPEEDS = {"WALK": 15, "BICYCLE": 50, "E_SCOOTER": 40, "BUS": 100, "CARPOOL": 160, "MOTORCYCLE": 180, "CAR": 180}
+SEED_ACHIEVEMENTS = ["FIRST_TRIP", "TRIPS_10", "TRIPS_50", "DISTANCE_100KM", "CO2_10KG", "CO2_100KG", "MULTIMODAL_3"]
 SEED_FACTORS = {"WALK": 0, "BICYCLE": 0, "E_SCOOTER": 25, "BUS": 68, "CARPOOL": 64, "MOTORCYCLE": 103, "CAR": 192}
 
 
@@ -73,7 +75,19 @@ def _clean(_database: None) -> Iterator[None]:
     limiter.reset()
     yield
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE trips, refresh_tokens, audit_logs, pois, cycleways"))
+        conn.execute(text(
+            "TRUNCATE trips, refresh_tokens, audit_logs, citizen_reports, notifications, user_achievements, "
+            "user_tokens, reports, stop_lines, transit_stops, bike_stations, transit_lines, pois, cycleways"
+        ))
+        conn.execute(text("DELETE FROM geo.mobility_zones WHERE source <> 'DEMO'"))
+        conn.execute(text("DELETE FROM achievements WHERE code <> ALL(:seed)"), {"seed": SEED_ACHIEVEMENTS})
+        conn.execute(text("UPDATE achievements SET is_active = true"))
+        conn.execute(text("UPDATE vehicle_types SET is_active = true"))
+        for mode, speed in SEED_SPEEDS.items():
+            conn.execute(
+                text("UPDATE transport_modes SET max_speed_kmh = :s, is_active = true WHERE mode = CAST(:m AS transport_mode)"),
+                {"s": speed, "m": mode},
+            )
         # DELETE (no TRUNCATE CASCADE): emission_factors.updated_by → SET NULL conserva los factores.
         conn.execute(text("DELETE FROM users"))
         for mode, grams in SEED_FACTORS.items():
@@ -141,8 +155,12 @@ ROUTE = {
 }
 
 
+_TRIP_SLOT = iter(range(1_000_000))
+
+
 def trip_payload(**overrides: Any) -> dict[str, Any]:
-    end = datetime.now(UTC).replace(microsecond=0) - timedelta(hours=1)
+    # Cada viaje en una franja distinta de 30 min: el contrato 1.1 rechaza solapes (TRIP_DUPLICATE).
+    end = datetime.now(UTC).replace(microsecond=0) - timedelta(hours=1, minutes=30 * next(_TRIP_SLOT))
     data = {
         "client_trip_id": str(uuid.uuid4()),
         "mode": "BICYCLE",

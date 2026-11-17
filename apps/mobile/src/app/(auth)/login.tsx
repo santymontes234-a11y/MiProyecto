@@ -1,3 +1,4 @@
+import { BRAND } from '@ecomove/shared';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Pressable, View, type TextInputInstance } from 'react-native';
@@ -51,7 +52,7 @@ export default function LoginScreen() {
   return (
     <Screen keyboard edges={['top', 'bottom']}>
       <View style={{ flex: 1, justifyContent: 'center', paddingVertical: spacing.xl }}>
-        <AuthHeader title="Inicia sesión" subtitle="Sigue sumando kilómetros sostenibles." />
+        <AuthHeader title="Inicia sesión" subtitle={`${BRAND.slogan} Sigue sumando kilómetros sostenibles.`} />
         {verify === '1' ? (
           <View style={{ marginBottom: spacing.lg }}>
             <Banner tone="success" message="Te enviamos un correo de confirmación. Abre el enlace y después inicia sesión." />

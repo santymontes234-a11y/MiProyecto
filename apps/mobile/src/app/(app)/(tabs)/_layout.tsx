@@ -29,7 +29,7 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Inicio', headerShown: false, tabBarIcon: tabIcon('home', 'home-outline') }} />
+      <Tabs.Screen name="home" options={{ title: 'Inicio', headerShown: false, tabBarIcon: tabIcon('home', 'home-outline') }} />
       <Tabs.Screen name="map" options={{ title: 'Mapa', headerShown: false, tabBarIcon: tabIcon('map', 'map-outline') }} />
       <Tabs.Screen name="history" options={{ title: 'Historial', tabBarIcon: tabIcon('time', 'time-outline') }} />
       <Tabs.Screen name="stats" options={{ title: 'Estadísticas', tabBarIcon: tabIcon('stats-chart', 'stats-chart-outline') }} />

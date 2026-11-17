@@ -90,6 +90,9 @@ import type {
   RouteResponse,
   Session,
   TransportModeInfo,
+  VehicleTypeInfo,
+  GeocodeQuery,
+  GeocodeResponse,
   TransportModeUpdate,
   TripEstimateBatchRequest,
   TripEstimateBatchResponse,
@@ -317,9 +320,19 @@ export function createApiClient(options: ApiClientOptions) {
         }),
     },
 
+    /** 1.2 — §12.1 búsqueda de lugares (POIs propios + Nominatim vía backend). */
+    geocode: {
+      search: ({ q, limit, near }: GeocodeQuery) =>
+        request<GeocodeResponse>('/geocode', {
+          query: { q, limit, near: near ? positionToParam(near) : undefined },
+        }),
+    },
+
     catalog: {
       transportModes: () =>
         request<TransportModeInfo[]>('/catalog/transport-modes', { auth: false }),
+      /** 1.2 */
+      vehicleTypes: () => request<VehicleTypeInfo[]>('/catalog/vehicle-types', { auth: false }),
       zones: ({ bbox, kind }: CatalogZoneQuery = {}) =>
         request<ZoneCollection>('/catalog/zones', {
           auth: false,
