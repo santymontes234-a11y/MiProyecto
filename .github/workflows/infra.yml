@@ -115,7 +115,7 @@ jobs:
           node-version: 22
       - name: npm audit (producción, críticas)
         run: npm audit --omit=dev --audit-level=critical
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: pip-audit (apps/api)
