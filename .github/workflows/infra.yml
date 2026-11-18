@@ -20,7 +20,7 @@ jobs:
     name: Scripts, Compose y Nginx
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Sintaxis bash
         run: for f in infrastructure/scripts/*.sh infrastructure/postgres/init-prod/*.sh; do bash -n "$f"; done
       - name: shellcheck
@@ -52,7 +52,7 @@ jobs:
     env:
       DEPLOY_STATE_DIR: ${{ github.workspace }}/.deploy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: .env.production efímero
         run: |
           infrastructure/scripts/generate_secrets.sh --domain ecomove.ci.test
@@ -85,7 +85,7 @@ jobs:
     needs: lint
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Construir ecomove/api y ecomove/web
         run: |
           tag="$(git rev-parse --short=12 HEAD)"
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-24.04
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -127,7 +127,7 @@ jobs:
     name: Android (config de producción)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
