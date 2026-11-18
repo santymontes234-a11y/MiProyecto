@@ -1,5 +1,5 @@
 # --- Etapa de construcción: compila wheels con las dependencias de ejecución ---
-FROM python:3.12-slim AS build
+FROM python:3.15-slim AS build
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /src
 COPY pyproject.toml ./
@@ -7,7 +7,7 @@ COPY app ./app
 RUN pip wheel --wheel-dir /wheels .
 
 # --- Etapa final: solo runtime, sin herramientas de desarrollo ni compiladores ---
-FROM python:3.12-slim AS runtime
+FROM python:3.15-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /app
 COPY --from=build /wheels /wheels
