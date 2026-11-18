@@ -18,7 +18,7 @@ jobs:
     name: TypeScript (shared, web, mobile)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -52,7 +52,7 @@ jobs:
       POSTGRES_PORT: "5432"
       JWT_SECRET_KEY: ci-only-jwt-secret-key-not-used-anywhere-else-0123456789
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: api
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Generar .env efímero (valores aleatorios, nunca versionados)
         run: |
           python3 - <<'PY'
@@ -109,7 +109,7 @@ jobs:
     name: Sin secretos versionados
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: .env no versionado y .env.example solo con placeholders
         run: |
           if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'; then
